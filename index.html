@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>社團多層級記帳</title>
+    <style>
+        .form-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
+        select, input { width: 100%; padding: 8px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<h3>【貸方 Credit】收入與權益分類範例</h3>
+
+<div class="form-row">
+    <!-- 1. 會計大類 -->
+    <div class="form-group">
+        <label>會計大類</label>
+        <select id="creditCategory" onchange="updateMainAccounts()">
+            <option value="">-- 請選擇 --</option>
+            <option value="收入">收入</option>
+            <option value="資產">資產</option>
+            <option value="負債">負債</option>
+            <option value="費損">費損</option>
+        </select>
+    </div>
+
+    <!-- 2. 主項目 -->
+    <div class="form-group">
+        <label>主項目</label>
+        <select id="creditMain" onchange="updateSubAccounts()">
+            <option value="">-- 請先選擇大類 --</option>
+        </select>
+    </div>
+
+    <!-- 3. 次級/子項目 -->
+    <div class="form-group">
+        <label>次級子項目</label>
+        <select id="creditSub">
+            <option value="">-- 請先選擇主項目 --</option>
+        </select>
+    </div>
+</div>
+
+<script>
+// 定義您的會計科目樹狀結構
+const accountTree = {
+    "收入": {
+        "教材收入": ["藍本", "黃本"],
+        "社費收入": ["紫微", "占卜牌", "一般社費"],
+        "活動收入": ["講座費用", "寒暑訓報名費"]
+    },
+    "費損": {
+        "活動支出": ["場地租借", "講師費", "茶水餐飲"],
+        "行政支出": ["文具印刷", "網域/軟體費"]
+    },
+    "資產": {
+        "現金/存款": ["社團郵局帳戶", "零用金現鈔"]
+    },
+    "負債": {
+        "應付款項": ["幹部代墊款"]
+    }
+};
+
+// 1. 根據「大類」更新「主項目」選單
+function updateMainAccounts() {
+    const category = document.getElementById("creditCategory").value;
+    const mainSelect = document.getElementById("creditMain");
+    const subSelect = document.getElementById("creditSub");
+
+    mainSelect.innerHTML = '<option value="">-- 請選擇主項目 --</option>';
+    subSelect.innerHTML = '<option value="">-- 請先選擇主項目 --</option>';
+
+    if (category && accountTree[category]) {
+        Object.keys(accountTree[category]).forEach(mainAcc => {
+            const opt = document.createElement("option");
+            opt.value = mainAcc;
+            opt.innerText = mainAcc;
+            mainSelect.appendChild(opt);
+        });
+    }
+}
+
+// 2. 根據「主項目」更新「次級子項目」選單
+function updateSubAccounts() {
+    const category = document.getElementById("creditCategory").value;
+    const mainAcc = document.getElementById("creditMain").value;
+    const subSelect = document.getElementById("creditSub");
+
+    subSelect.innerHTML = '<option value="">-- 請選擇子項目 --</option>';
+
+    if (category && mainAcc && accountTree[category][mainAcc]) {
+        accountTree[category][mainAcc].forEach(subAcc => {
+            const opt = document.createElement("option");
+            opt.value = subAcc;
+            opt.innerText = subAcc;
+            subSelect.appendChild(opt);
+        });
+    }
+}
+</script>
+
+</body>
+</html>
