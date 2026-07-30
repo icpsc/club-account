@@ -103,7 +103,6 @@
 
         .status { margin-top: 18px; font-weight: 600; text-align: center; font-size: 0.95em; }
 
-        /* 看板樣式 */
         .inventory-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -144,7 +143,6 @@
 </head>
 <body>
 
-<!-- 表單卡片 -->
 <div class="card">
     <h2>社團複式簿記記帳系統</h2>
     
@@ -176,9 +174,9 @@
             </div>
         </div>
 
-        <!-- 借方區塊 -->
+        <!-- 借方區塊（限制：資產、費損） -->
         <div class="form-group">
-            <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 / 負債減少</div>
+            <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 (僅限資產、費損)</div>
             <div class="grid-3">
                 <div>
                     <label>大類</label>
@@ -205,9 +203,9 @@
             </div>
         </div>
 
-        <!-- 貸方區塊 -->
+        <!-- 貸方區塊（限制：收入、負債） -->
         <div class="form-group">
-            <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 / 負債增加</div>
+            <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 (僅限收入、負債)</div>
             <div class="grid-3">
                 <div>
                     <label>大類</label>
@@ -296,6 +294,12 @@
         }
     };
 
+    // 借貸可選的大類限制
+    const allowedCategories = {
+        "debit": ["資產", "費損"],
+        "credit": ["收入", "負債"]
+    };
+
     window.onload = function() {
         document.getElementById('date').valueAsDate = new Date();
         initCategories('debit');
@@ -305,7 +309,8 @@
 
     function initCategories(side) {
         const catSelect = document.getElementById(`${side}Category`);
-        Object.keys(accountTree).forEach(cat => {
+        catSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
+        allowedCategories[side].forEach(cat => {
             const opt = document.createElement("option");
             opt.value = cat;
             opt.innerText = cat;
@@ -437,7 +442,7 @@
                 document.getElementById('quantity').value = "0";
                 updateMainOptions('debit');
                 updateMainOptions('credit');
-                fetchDashboardData(); // 重新整理數據看板
+                fetchDashboardData();
             } else {
                 throw new Error(data.message);
             }
@@ -453,4 +458,5 @@
 </script>
 
 </body>
+</html>
 </html>
