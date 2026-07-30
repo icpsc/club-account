@@ -2,103 +2,343 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>社團多層級記帳</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社團複式簿記記帳系統</title>
     <style>
-        .form-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .form-group { flex: 1; }
-        select, input { width: 100%; padding: 8px; box-sizing: border-box; }
+        :root {
+            --primary: #1e3a8a; /* 經典深藍 */
+            --primary-hover: #1e40af;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #334155;
+            --border: #cbd5e1;
+            --debit-bg: #eff6ff;
+            --debit-text: #1d4ed8;
+            --credit-bg: #fff7ed;
+            --credit-text: #c2410c;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 1.6rem;
+            letter-spacing: -0.025em;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.9em; color: #475569; }
+        
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #fff;
+            color: #0f172a;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+        }
+
+        .section-title {
+            font-weight: 700;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            font-size: 0.95em;
+            letter-spacing: 0.025em;
+        }
+
+        .debit-header { background-color: var(--debit-bg); color: var(--debit-text); border-left: 4px solid var(--debit-text); }
+        .credit-header { background-color: var(--credit-bg); color: var(--credit-text); border-left: 4px solid var(--credit-text); }
+
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+        button:active { transform: scale(0.99); }
+        button:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+        .status { margin-top: 18px; font-weight: 600; text-align: center; font-size: 0.95em; }
+
+        @media (max-width: 640px) {
+            body { padding: 12px; margin: 10px auto; }
+            .card { padding: 18px; }
+            .grid-3, .grid-2 { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-<h3>【貸方 Credit】收入與權益分類範例</h3>
+<div class="card">
+    <h2>社團複式簿記記帳系統</h2>
+    
+    <form id="accountingForm">
+        <div class="grid-2">
+            <div class="form-group">
+                <label>交易日期</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label>經手 / 記帳人</label>
+                <select id="createdBy" required>
+                    <option value="">-- 請選擇幹部 --</option>
+                    <option value="總務">總務</option>
+                    <option value="社長">社長</option>
+                    <option value="副總務">副總務</option>
+                </select>
+            </div>
+        </div>
 
-<div class="form-row">
-    <!-- 1. 會計大類 -->
-    <div class="form-group">
-        <label>會計大類</label>
-        <select id="creditCategory" onchange="updateMainAccounts()">
-            <option value="">-- 請選擇 --</option>
-            <option value="收入">收入</option>
-            <option value="資產">資產</option>
-            <option value="負債">負債</option>
-            <option value="費損">費損</option>
-        </select>
-    </div>
+        <div class="form-group">
+            <label>交易摘要 / 事由說明</label>
+            <input type="text" id="description" placeholder="例如：社會人士購買藍本教材" required>
+        </div>
 
-    <!-- 2. 主項目 -->
-    <div class="form-group">
-        <label>主項目</label>
-        <select id="creditMain" onchange="updateSubAccounts()">
-            <option value="">-- 請先選擇大類 --</option>
-        </select>
-    </div>
+        <!-- 借方區塊 (Debit) -->
+        <div class="form-group">
+            <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 / 負債減少</div>
+            <div class="grid-3">
+                <div>
+                    <label>大類</label>
+                    <select id="debitCategory" onchange="updateMainOptions('debit')" required>
+                        <option value="">-- 請選擇 --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>主項目</label>
+                    <select id="debitMain" onchange="updateSubOptions('debit')" required>
+                        <option value="">-- 請先選大類 --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>次級子項目</label>
+                    <select id="debitSub" required>
+                        <option value="">-- 請先選主項目 --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+                <label>借方金額 ($)</label>
+                <input type="number" id="debitAmount" placeholder="0" min="1" required>
+            </div>
+        </div>
 
-    <!-- 3. 次級/子項目 -->
-    <div class="form-group">
-        <label>次級子項目</label>
-        <select id="creditSub">
-            <option value="">-- 請先選擇主項目 --</option>
-        </select>
-    </div>
+        <!-- 貸方區塊 (Credit) -->
+        <div class="form-group">
+            <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 / 負債增加</div>
+            <div class="grid-3">
+                <div>
+                    <label>大類</label>
+                    <select id="creditCategory" onchange="updateMainOptions('credit')" required>
+                        <option value="">-- 請選擇 --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>主項目</label>
+                    <select id="creditMain" onchange="updateSubOptions('credit')" required>
+                        <option value="">-- 請先選大類 --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>次級子項目</label>
+                    <select id="creditSub" required>
+                        <option value="">-- 請先選主項目 --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+                <label>貸方金額 ($)</label>
+                <input type="number" id="creditAmount" placeholder="0" min="1" required>
+            </div>
+        </div>
+
+        <button type="submit" id="submitBtn">提交帳目</button>
+    </form>
+
+    <div id="status" class="status"></div>
 </div>
 
 <script>
-// 定義您的會計科目樹狀結構
-const accountTree = {
-    "收入": {
-        "教材收入": ["藍本", "黃本"],
-        "社費收入": ["紫微", "占卜牌", "一般社費"],
-        "活動收入": ["講座費用", "寒暑訓報名費"]
-    },
-    "費損": {
-        "活動支出": ["場地租借", "講師費", "茶水餐飲"],
-        "行政支出": ["文具印刷", "網域/軟體費"]
-    },
-    "資產": {
-        "現金/存款": ["社團郵局帳戶", "零用金現鈔"]
-    },
-    "負債": {
-        "應付款項": ["幹部代墊款"]
-    }
-};
+    // ⚠️ 請務必將此處替換為您在 Google Apps Script 取得的部署網址 URL
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxF-2LYhi-p_JvX2HE9zBu4b7SO6QGjzrs0qfzfBAbpLh1Okk1xNak8oluZ-k-Z-GfF/exec";
 
-// 1. 根據「大類」更新「主項目」選單
-function updateMainAccounts() {
-    const category = document.getElementById("creditCategory").value;
-    const mainSelect = document.getElementById("creditMain");
-    const subSelect = document.getElementById("creditSub");
+    // 根據您提供的需求建立會計科目樹狀結構
+    const accountTree = {
+        "收入": {
+            "教材收入": [
+                "社會人士藍本", "社會人士基礎黃本", "社會人士花甲子納音",
+                "學生藍本", "學生基礎黃本", "學生花甲子納音",
+                "易經占卜牌", "善本易經", "命理基礎篇"
+            ],
+            "社費收入": [
+                "社會人士週二", "社會人士週三", "社會人士都上",
+                "學生週二", "學生週三", "學生都上"
+            ]
+        },
+        "費損": {
+            "活動支出": ["場地租用", "茶水餐飲", "宣傳印製", "老師", "社員聚餐", "其他"],
+            "行政支出": ["教室租用", "影印費", "軟體訂閱", "其他"]
+        },
+        "資產": {
+            "現金與存款": ["社團郵局帳戶", "現金"]
+        },
+        "負債": {
+            "預收款": ["教材"]
+        }
+    };
 
-    mainSelect.innerHTML = '<option value="">-- 請選擇主項目 --</option>';
-    subSelect.innerHTML = '<option value="">-- 請先選擇主項目 --</option>';
+    // 初始化頁面
+    window.onload = function() {
+        // 預設帶入今天的日期
+        document.getElementById('date').valueAsDate = new Date();
+        initCategories('debit');
+        initCategories('credit');
+    };
 
-    if (category && accountTree[category]) {
-        Object.keys(accountTree[category]).forEach(mainAcc => {
+    function initCategories(side) {
+        const catSelect = document.getElementById(`${side}Category`);
+        Object.keys(accountTree).forEach(cat => {
             const opt = document.createElement("option");
-            opt.value = mainAcc;
-            opt.innerText = mainAcc;
-            mainSelect.appendChild(opt);
+            opt.value = cat;
+            opt.innerText = cat;
+            catSelect.appendChild(opt);
         });
     }
-}
 
-// 2. 根據「主項目」更新「次級子項目」選單
-function updateSubAccounts() {
-    const category = document.getElementById("creditCategory").value;
-    const mainAcc = document.getElementById("creditMain").value;
-    const subSelect = document.getElementById("creditSub");
+    function updateMainOptions(side) {
+        const cat = document.getElementById(`${side}Category`).value;
+        const mainSelect = document.getElementById(`${side}Main`);
+        const subSelect = document.getElementById(`${side}Sub`);
 
-    subSelect.innerHTML = '<option value="">-- 請選擇子項目 --</option>';
+        mainSelect.innerHTML = '<option value="">-- 請選擇主項目 --</option>';
+        subSelect.innerHTML = '<option value="">-- 請先選主項目 --</option>';
 
-    if (category && mainAcc && accountTree[category][mainAcc]) {
-        accountTree[category][mainAcc].forEach(subAcc => {
-            const opt = document.createElement("option");
-            opt.value = subAcc;
-            opt.innerText = subAcc;
-            subSelect.appendChild(opt);
-        });
+        if (cat && accountTree[cat]) {
+            Object.keys(accountTree[cat]).forEach(main => {
+                const opt = document.createElement("option");
+                opt.value = main;
+                opt.innerText = main;
+                mainSelect.appendChild(opt);
+            });
+        }
     }
-}
+
+    function updateSubOptions(side) {
+        const cat = document.getElementById(`${side}Category`).value;
+        const main = document.getElementById(`${side}Main`).value;
+        const subSelect = document.getElementById(`${side}Sub`);
+
+        subSelect.innerHTML = '<option value="">-- 請選擇次級子項目 --</option>';
+
+        if (cat && main && accountTree[cat][main]) {
+            accountTree[cat][main].forEach(sub => {
+                const opt = document.createElement("option");
+                opt.value = sub;
+                opt.innerText = sub;
+                subSelect.appendChild(opt);
+            });
+        }
+    }
+
+    // 表單驗證與發送
+    document.getElementById('accountingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const statusDiv = document.getElementById('status');
+        const debitAmt = Number(document.getElementById('debitAmount').value);
+        const creditAmt = Number(document.getElementById('creditAmount').value);
+
+        // 借貸不平衡防錯驗證
+        if (debitAmt !== creditAmt) {
+            statusDiv.style.color = "var(--danger)";
+            statusDiv.innerText = "❌ 試算不平衡：【借方金額】必須等於【貸方金額】！";
+            return;
+        }
+
+        statusDiv.style.color = "#64748b";
+        statusDiv.innerText = "⏳ 帳目發送中，請稍候...";
+        document.getElementById('submitBtn').disabled = true;
+
+        const payload = {
+            date: document.getElementById('date').value,
+            createdBy: document.getElementById('createdBy').value,
+            description: document.getElementById('description').value,
+            debitCategory: document.getElementById('debitCategory').value,
+            debitMain: document.getElementById('debitMain').value,
+            debitSub: document.getElementById('debitSub').value,
+            debitAmount: debitAmt,
+            creditCategory: document.getElementById('creditCategory').value,
+            creditMain: document.getElementById('creditMain').value,
+            creditSub: document.getElementById('creditSub').value,
+            creditAmount: creditAmt
+        };
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.result === "success") {
+                statusDiv.style.color = "var(--success)";
+                statusDiv.innerText = "✅ 記帳成功！已同步寫入社團 Google 試算表。";
+                document.getElementById('accountingForm').reset();
+                document.getElementById('date').valueAsDate = new Date();
+                updateMainOptions('debit');
+                updateMainOptions('credit');
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(err => {
+            statusDiv.style.color = "var(--danger)";
+            statusDiv.innerText = "❌ 發送失敗！請檢查 Google Apps Script 部署 URL 是否正確。";
+        })
+        .finally(() => {
+            document.getElementById('submitBtn').disabled = false;
+        });
+    });
 </script>
 
 </body>
