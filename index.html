@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>易學社記帳系統</title>
+    <title>台大易學研究社 記帳系統</title>
     <style>
         :root {
-            --primary: #1a1a1a;       /* 主色調：經典深藍（或可改為太極玄黑 #1a1a1a） */
-    --primary-hover: #1e40af; /* 滑鼠懸停顏色 */
+            --primary: #1e3a8a;
+            --primary-hover: #1e40af;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text: #334155;
@@ -26,7 +26,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            max-width: 850px;
+            max-width: 880px;
             margin: 30px auto;
             padding: 20px;
         }
@@ -116,47 +116,61 @@
         .totals-table th, .totals-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         .totals-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
 
-        /* 表單審核卡片樣式 */
+        /* 複合傳票審核卡片樣式 */
         .pending-card {
-            background: var(--warning-bg);
-            border: 1px solid var(--warning-border);
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 12px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .pending-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
         }
-        .pending-info { font-size: 0.9em; line-height: 1.5; }
-        .btn-apply {
+        .pending-title { font-weight: 700; font-size: 1.05em; color: var(--primary); }
+        .entry-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            margin-bottom: 14px;
+        }
+        .entry-table th, .entry-table td { padding: 8px; text-align: left; border-bottom: 1px dashed #e2e8f0; }
+        .entry-table th { background: #f8fafc; color: #64748b; }
+        .tag-debit { color: var(--debit-text); font-weight: 700; }
+        .tag-credit { color: var(--credit-text); font-weight: 700; }
+
+        .btn-approve {
             background: var(--success);
             color: white;
-            padding: 8px 14px;
+            padding: 10px 16px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85em;
-            width: auto;
-            margin-top: 0;
+            font-weight: 700;
+            font-size: 0.9em;
+            width: 100%;
         }
+        .btn-approve:hover { background: #15803d; }
 
         @media (max-width: 640px) {
             body { padding: 12px; margin: 10px auto; }
             .card { padding: 18px; }
             .grid-3, .grid-2 { grid-template-columns: 1fr; }
-            .pending-card { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>易學社記帳系統</h2>
+    <h2>台大易學研究社 記帳系統</h2>
     
     <form id="accountingForm">
-        <input type="hidden" id="fromFormRowIndex" value="">
-
         <div class="grid-2">
             <div class="form-group">
                 <label>交易日期</label>
@@ -176,7 +190,7 @@
         <div class="grid-2">
             <div class="form-group">
                 <label>交易摘要 / 事由說明 (選填)</label>
-                <input type="text" id="description" placeholder="例如：張小明購買藍本教材">
+                <input type="text" id="description" placeholder="例如：張小明購買紫微斗數正統">
             </div>
             <div class="form-group">
                 <label>教材數量 / 本數</label>
@@ -226,7 +240,7 @@
                 <div>
                     <label>主項目</label>
                     <select id="creditMain" onchange="updateSubOptions('credit')" required>
-                        <option value="">-- 請先選大類 --</option>
+                        <option value="">-- 請先選主項目 --</option>
                     </select>
                 </div>
                 <div>
@@ -242,13 +256,13 @@
             </div>
         </div>
 
-        <button type="submit" id="submitBtn">提交帳目</button>
+        <button type="submit" id="submitBtn">提交單筆帳目</button>
     </form>
 
     <div id="status" class="status"></div>
 </div>
 
-<!-- 待審核表單看板 -->
+<!-- 待審核表單看板 (直向複合分錄預覽) -->
 <div class="card">
     <h3>📋 待審核 Google 表單交易</h3>
     <div id="pendingFormsContainer">
@@ -258,7 +272,7 @@
 
 <!-- 庫存看板 -->
 <div class="card">
-    <h3>📦 教材即時庫存看板</h3>
+    <h3>📦 易學社教材即時庫存</h3>
     <div id="inventoryContainer" class="inventory-grid">
         <div style="color: #64748b;">載入庫存數據中...</div>
     </div>
@@ -282,7 +296,7 @@
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbydA3nC4Po0Qw8nc7czDNcRknNbZX04ABJ6SAdpxy1mFSyoyiWA7u1Wn-tYYnXovebZ/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbytX4WvLNWQJoXg0fZPTLokwpVmHFEmSb7DT75b8_G3V4LqGXQCLhwMp4la7wbRzNFI/exec";
 
     const accountTree = {
         "收入": {
@@ -315,18 +329,7 @@
         }
     };
 
-    const priceRules = {
-        "紫微斗數正統（黃本）": { "學生": 200, "社會人士": 400 },
-        "紫微斗數論命實例（藍本）": { "學生": 300, "社會人士": 800 },
-        "花甲子納音": { "學生": 400, "社會人士": 1200 },
-        "善本易經": { "學生": 300, "社會人士": 300 },
-        "易經占卜牌": { "學生": 800, "社會人士": 1000 },
-        "命理基礎篇": { "學生": 200, "社會人士": 200 },
-        "神相全編": { "學生": 300, "社會人士": 300 },
-        "紫微斗數": { "學生": 200, "社會人士": 800 },
-        "易經占卜牌社費": { "學生": 200, "社會人士": 800 },
-        "合報": { "學生": 300, "社會人士": 1200 }
-    };
+    let cachedPendingForms = [];
 
     window.onload = function() {
         document.getElementById('date').valueAsDate = new Date();
@@ -388,7 +391,8 @@
             if (data.result === "success") {
                 renderInventory(data.inventory);
                 renderSubTotals(data.subTotals);
-                renderPendingForms(data.pendingForms);
+                cachedPendingForms = data.pendingForms || [];
+                renderPendingForms(cachedPendingForms);
             }
         })
         .catch(err => console.error("資料載入失敗:", err));
@@ -402,88 +406,124 @@
             return;
         }
 
-        forms.forEach(item => {
+        forms.forEach((item, index) => {
             const card = document.createElement('div');
             card.className = 'pending-card';
+            
+            let tableRows = `
+                <tr>
+                    <td><span class="tag-debit">【借】</span> ${item.debitEntry.cat}-${item.debitEntry.main}</td>
+                    <td>${item.debitEntry.sub}</td>
+                    <td style="text-align:right;">$${item.debitEntry.amount.toLocaleString()}</td>
+                    <td style="text-align:center;">0</td>
+                </tr>
+            `;
+
+            item.creditEntries.forEach(c => {
+                tableRows += `
+                    <tr>
+                        <td><span class="tag-credit">【貸】</span> ${c.cat}-${c.main}</td>
+                        <td>${c.sub}</td>
+                        <td style="text-align:right;">$${c.amount.toLocaleString()}</td>
+                        <td style="text-align:center;">${c.qty}</td>
+                    </tr>
+                `;
+            });
+
             card.innerHTML = `
-                <div class="pending-info">
-                    <strong>姓名：</strong>${item.name} (${item.identity})<br>
-                    <strong>社費：</strong>${item.fee || '無'}<br>
-                    <strong>書籍：</strong>${item.books || '無'}
+                <div class="pending-header">
+                    <div class="pending-title">📋 申購人：${item.name} (${item.identity})</div>
+                    <div style="font-weight:700; color:var(--primary);">傳票總金額：$${item.totalAmount.toLocaleString()}</div>
                 </div>
-                <button class="btn-apply" onclick="applyFormToRecord(${JSON.stringify(item).replace(/"/g, '&quot;')})">帶入表單審核</button>
+                <table class="entry-table">
+                    <thead>
+                        <tr>
+                            <th>借/貸 & 項目大類</th>
+                            <th>次級子項目</th>
+                            <th style="text-align:right;">金額 ($)</th>
+                            <th style="text-align:center;">數量</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <button class="btn-approve" onclick="approveBatchForm(${index})">✅ 一鍵核准這筆複合分錄入帳</button>
             `;
             container.appendChild(card);
         });
     }
 
-    function applyFormToRecord(item) {
-        document.getElementById('fromFormRowIndex').value = item.rowIndex;
-        document.getElementById('description').value = `${item.name} 表單申購`;
-        
-        // 預設借方：現金
-        document.getElementById('debitCategory').value = "資產";
-        updateMainOptions('debit');
-        document.getElementById('debitMain').value = "現金與存款";
-        updateSubOptions('debit');
-        document.getElementById('debitSub').value = "現金";
+    function approveBatchForm(index) {
+        const item = cachedPendingForms[index];
+        if (!item) return;
 
-        // 預設貸方：根據書籍或社費
-        document.getElementById('creditCategory').value = "收入";
-        updateMainOptions('credit');
-
-        let price = 0;
-        let qty = 0;
-
-        if (item.books) {
-            document.getElementById('creditMain').value = "教材收入";
-            updateSubOptions('credit');
-            qty = 1;
-            document.getElementById('quantity').value = 1;
-
-            if (item.books.includes("正統")) {
-                document.getElementById('creditSub').value = `${item.identity}紫微斗數正統（黃本）`;
-                price = priceRules["紫微斗數正統（黃本）"][item.identity];
-            } else if (item.books.includes("論命實例")) {
-                document.getElementById('creditSub').value = `${item.identity}紫微斗數論命實例（藍本）`;
-                price = priceRules["紫微斗數論命實例（藍本）"][item.identity];
-            } else if (item.books.includes("納音")) {
-                document.getElementById('creditSub').value = `${item.identity}花甲子納音`;
-                price = priceRules["花甲子納音"][item.identity];
-            } else if (item.books.includes("善本易經")) {
-                document.getElementById('creditSub').value = "善本易經";
-                price = 300;
-            } else if (item.books.includes("占卜牌")) {
-                document.getElementById('creditSub').value = `${item.identity}易經占卜牌`;
-                price = priceRules["易經占卜牌"][item.identity];
-            } else if (item.books.includes("命理基礎篇")) {
-                document.getElementById('creditSub').value = "命理基礎篇";
-                price = 200;
-            } else if (item.books.includes("神相全編")) {
-                document.getElementById('creditSub').value = "神相全編";
-                price = 300;
-            }
-        } else if (item.fee) {
-            document.getElementById('creditMain').value = "社費收入";
-            updateSubOptions('credit');
-            document.getElementById('quantity').value = 0;
-
-            if (item.fee.includes("紫微")) {
-                document.getElementById('creditSub').value = item.identity === "學生" ? "學生週二" : "社會人士週二";
-                price = item.identity === "學生" ? 200 : 800;
-            } else if (item.fee.includes("占卜牌")) {
-                document.getElementById('creditSub').value = item.identity === "學生" ? "學生週三" : "社會人士週三";
-                price = item.identity === "學生" ? 200 : 800;
-            } else if (item.fee.includes("合報")) {
-                document.getElementById('creditSub').value = item.identity === "學生" ? "學生合報" : "社會人士合報";
-                price = item.identity === "學生" ? 300 : 1200;
-            }
+        const currentCreatedBy = document.getElementById('createdBy').value;
+        if (!currentCreatedBy) {
+            alert("⚠️ 請先在上方選擇【經手 / 記帳人】（如：總務/社長），才能核准入帳喔！");
+            document.getElementById('createdBy').focus();
+            return;
         }
 
-        document.getElementById('debitAmount').value = price;
-        document.getElementById('creditAmount').value = price;
+        const statusDiv = document.getElementById('status');
+        statusDiv.style.color = "#64748b";
+        statusDiv.innerText = `⏳ 正在將 ${item.name} 的複合分錄寫入正式帳冊...`;
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const todayStr = new Date().toISOString().split('T')[0];
+        const desc = `${item.name} 表單申購`;
+
+        // 建立直向多行傳票資料
+        const batchRows = [];
+
+        // 1. 借方列
+        batchRows.push({
+            date: todayStr,
+            createdBy: currentCreatedBy,
+            quantity: 0,
+            description: desc,
+            debitCategory: item.debitEntry.cat,
+            debitMain: item.debitEntry.main,
+            debitSub: item.debitEntry.sub,
+            debitAmount: item.debitEntry.amount,
+            creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0
+        });
+
+        // 2. 貸方列 (有多個項目就寫多列)
+        item.creditEntries.forEach(c => {
+            batchRows.push({
+                date: todayStr,
+                createdBy: currentCreatedBy,
+                quantity: c.qty,
+                description: desc,
+                debitCategory: "", debitMain: "", debitSub: "", debitAmount: 0,
+                creditCategory: c.cat,
+                creditMain: c.main,
+                creditSub: c.sub,
+                creditAmount: c.amount
+            });
+        });
+
+        const payload = {
+            batchRows: batchRows,
+            fromFormRowIndex: item.rowIndex
+        };
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                statusDiv.style.color = "var(--success)";
+                statusDiv.innerText = `✅ 成功入帳 ${item.name} 的表單交易！`;
+                fetchDashboardData();
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(err => {
+            statusDiv.style.color = "var(--danger)";
+            statusDiv.innerText = "❌ 入帳失敗，請檢查網路連線或 Apps Script 部署網址。";
+        });
     }
 
     function renderInventory(invData) {
@@ -546,8 +586,7 @@
             creditCategory: document.getElementById('creditCategory').value,
             creditMain: document.getElementById('creditMain').value,
             creditSub: document.getElementById('creditSub').value,
-            creditAmount: creditAmt,
-            fromFormRowIndex: document.getElementById('fromFormRowIndex').value
+            creditAmount: creditAmt
         };
 
         fetch(GAS_URL, {
@@ -560,7 +599,6 @@
                 statusDiv.style.color = "var(--success)";
                 statusDiv.innerText = "✅ 記帳成功！已同步寫入 Google 試算表。";
                 document.getElementById('accountingForm').reset();
-                document.getElementById('fromFormRowIndex').value = "";
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('quantity').value = "0";
                 updateMainOptions('debit');
