@@ -18,8 +18,6 @@
             --credit-text: #c2410c;
             --success: #16a34a;
             --danger: #dc2626;
-            --warning-bg: #fefce8;
-            --warning-border: #fef08a;
         }
 
         body {
@@ -116,7 +114,6 @@
         .totals-table th, .totals-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         .totals-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
 
-        /* 複合傳票審核卡片樣式 */
         .pending-card {
             background: #ffffff;
             border: 1px solid #cbd5e1;
@@ -193,12 +190,12 @@
                 <input type="text" id="description" placeholder="例如：張小明購買紫微斗數正統">
             </div>
             <div class="form-group">
-                <label>教材數量 / 本數</label>
-                <input type="number" id="quantity" placeholder="0" min="0" value="0">
+                <label>教材異動數量 (本/套，非教材填 0)</label>
+                <input type="number" id="quantity" placeholder="0" min="0" value="0" required>
             </div>
         </div>
 
-        <!-- 借方區塊 (開放四大類) -->
+        <!-- 借方區塊 -->
         <div class="form-group">
             <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 / 負債減少</div>
             <div class="grid-3">
@@ -227,7 +224,7 @@
             </div>
         </div>
 
-        <!-- 貸方區塊 (開放四大類) -->
+        <!-- 貸方區塊 -->
         <div class="form-group">
             <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 / 負債增加</div>
             <div class="grid-3">
@@ -240,7 +237,7 @@
                 <div>
                     <label>主項目</label>
                     <select id="creditMain" onchange="updateSubOptions('credit')" required>
-                        <option value="">-- 請先選主項目 --</option>
+                        <option value="">-- 請先選大類 --</option>
                     </select>
                 </div>
                 <div>
@@ -262,7 +259,7 @@
     <div id="status" class="status"></div>
 </div>
 
-<!-- 待審核表單看板 (直向複合分錄預覽) -->
+<!-- 待審核表單看板 -->
 <div class="card">
     <h3>📋 待審核 Google 表單交易</h3>
     <div id="pendingFormsContainer">
@@ -296,7 +293,7 @@
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbytX4WvLNWQJoXg0fZPTLokwpVmHFEmSb7DT75b8_G3V4LqGXQCLhwMp4la7wbRzNFI/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxJC_us9XaEbewRpjU31CnSViTLiQVwhEs2IE88xqV26O7t2sPVb8iEEd8NjznEKxTy/exec";
 
     const accountTree = {
         "收入": {
@@ -470,34 +467,33 @@
         const todayStr = new Date().toISOString().split('T')[0];
         const desc = `${item.name} 表單申購`;
 
-        // 建立直向多行傳票資料
         const batchRows = [];
 
         // 1. 借方列
         batchRows.push({
             date: todayStr,
             createdBy: currentCreatedBy,
-            quantity: 0,
             description: desc,
             debitCategory: item.debitEntry.cat,
             debitMain: item.debitEntry.main,
             debitSub: item.debitEntry.sub,
             debitAmount: item.debitEntry.amount,
-            creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0
+            creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0,
+            quantity: 0
         });
 
-        // 2. 貸方列 (有多個項目就寫多列)
+        // 2. 貸方列
         item.creditEntries.forEach(c => {
             batchRows.push({
                 date: todayStr,
                 createdBy: currentCreatedBy,
-                quantity: c.qty,
                 description: desc,
                 debitCategory: "", debitMain: "", debitSub: "", debitAmount: 0,
                 creditCategory: c.cat,
                 creditMain: c.main,
                 creditSub: c.sub,
-                creditAmount: c.amount
+                creditAmount: c.amount,
+                quantity: c.qty
             });
         });
 
