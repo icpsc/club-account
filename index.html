@@ -293,7 +293,7 @@
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxJC_us9XaEbewRpjU31CnSViTLiQVwhEs2IE88xqV26O7t2sPVb8iEEd8NjznEKxTy/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzZBRufXhuoOF_Z1tXmsV_rm8fR3ftKuC-m24KESlK7J4BY7uOr563XCljOgECgUkRV/exec";
 
     const accountTree = {
         "收入": {
@@ -473,13 +473,13 @@
         batchRows.push({
             date: todayStr,
             createdBy: currentCreatedBy,
+            quantity: 0,
             description: desc,
             debitCategory: item.debitEntry.cat,
             debitMain: item.debitEntry.main,
             debitSub: item.debitEntry.sub,
             debitAmount: item.debitEntry.amount,
-            creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0,
-            quantity: 0
+            creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0
         });
 
         // 2. 貸方列
@@ -487,13 +487,13 @@
             batchRows.push({
                 date: todayStr,
                 createdBy: currentCreatedBy,
+                quantity: c.qty,
                 description: desc,
                 debitCategory: "", debitMain: "", debitSub: "", debitAmount: 0,
                 creditCategory: c.cat,
                 creditMain: c.main,
                 creditSub: c.sub,
-                creditAmount: c.amount,
-                quantity: c.qty
+                creditAmount: c.amount
             });
         });
 
@@ -554,6 +554,7 @@
         });
     }
 
+    // 手動記帳表單送出事件：自動包裝為「一借一行、一貸一行」批次送出
     document.getElementById('accountingForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const statusDiv = document.getElementById('status');
@@ -570,30 +571,47 @@
         statusDiv.innerText = "⏳ 帳目發送中，請稍候...";
         document.getElementById('submitBtn').disabled = true;
 
-        const payload = {
-            date: document.getElementById('date').value,
-            createdBy: document.getElementById('createdBy').value,
-            description: document.getElementById('description').value,
-            quantity: Number(document.getElementById('quantity').value) || 0,
-            debitCategory: document.getElementById('debitCategory').value,
-            debitMain: document.getElementById('debitMain').value,
-            debitSub: document.getElementById('debitSub').value,
-            debitAmount: debitAmt,
-            creditCategory: document.getElementById('creditCategory').value,
-            creditMain: document.getElementById('creditMain').value,
-            creditSub: document.getElementById('creditSub').value,
-            creditAmount: creditAmt
-        };
+        const dateVal = document.getElementById('date').value;
+        const createdByVal = document.getElementById('createdBy').value;
+        const descVal = document.getElementById('description').value;
+        const qtyVal = Number(document.getElementById('quantity').value) || 0;
+
+        const batchRows = [
+            // 借方獨立行
+            {
+                date: dateVal,
+                createdBy: createdByVal,
+                quantity: 0,
+                description: descVal,
+                debitCategory: document.getElementById('debitCategory').value,
+                debitMain: document.getElementById('debitMain').value,
+                debitSub: document.getElementById('debitSub').value,
+                debitAmount: debitAmt,
+                creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0
+            },
+            // 貸方獨立行
+            {
+                date: dateVal,
+                createdBy: createdByVal,
+                quantity: qtyVal,
+                description: descVal,
+                debitCategory: "", debitMain: "", debitSub: "", debitAmount: 0,
+                creditCategory: document.getElementById('creditCategory').value,
+                creditMain: document.getElementById('creditMain').value,
+                creditSub: document.getElementById('creditSub').value,
+                creditAmount: creditAmt
+            }
+        ];
 
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ batchRows: batchRows })
         })
         .then(res => res.json())
         .then(data => {
             if(data.result === "success") {
                 statusDiv.style.color = "var(--success)";
-                statusDiv.innerText = "✅ 記帳成功！已同步寫入 Google 試算表。";
+                statusDiv.innerText = "✅ 手動記帳成功！已自動拆解為直向借貸分列寫入試算表。";
                 document.getElementById('accountingForm').reset();
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('quantity').value = "0";
