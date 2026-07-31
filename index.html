@@ -18,6 +18,8 @@
             --credit-text: #c2410c;
             --success: #16a34a;
             --danger: #dc2626;
+            --warning-bg: #fefce8;
+            --warning-border: #fef08a;
         }
 
         body {
@@ -38,12 +40,7 @@
             margin-bottom: 24px;
         }
 
-        h2, h3 {
-            color: var(--primary);
-            margin-top: 0;
-            letter-spacing: -0.025em;
-        }
-
+        h2, h3 { color: var(--primary); margin-top: 0; letter-spacing: -0.025em; }
         h2 { text-align: center; font-size: 1.6rem; margin-bottom: 24px; }
         h3 { font-size: 1.25rem; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
 
@@ -59,7 +56,6 @@
             font-size: 14px;
             background-color: #fff;
             color: #0f172a;
-            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         input:focus, select:focus {
@@ -74,7 +70,6 @@
             border-radius: 6px;
             margin-bottom: 14px;
             font-size: 0.95em;
-            letter-spacing: 0.025em;
         }
 
         .debit-header { background-color: var(--debit-bg); color: var(--debit-text); border-left: 4px solid var(--debit-text); }
@@ -93,19 +88,17 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
             margin-top: 10px;
         }
 
         button:hover { background-color: var(--primary-hover); }
-        button:active { transform: scale(0.99); }
         button:disabled { background-color: #94a3b8; cursor: not-allowed; }
 
         .status { margin-top: 18px; font-weight: 600; text-align: center; font-size: 0.95em; }
 
         .inventory-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 12px;
         }
 
@@ -117,27 +110,42 @@
         }
 
         .inventory-item .title { font-size: 0.85em; color: #64748b; font-weight: 600; }
-        .inventory-item .count { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-top: 4px; }
+        .inventory-item .count { font-size: 1.3rem; font-weight: 700; color: #0f172a; margin-top: 4px; }
 
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95em;
-        }
-
-        .totals-table th, .totals-table td {
-            text-align: left;
-            padding: 10px 12px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
+        .totals-table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
+        .totals-table th, .totals-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         .totals-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
-        .totals-table tr:hover { background-color: #f1f5f9; }
+
+        /* 表單審核卡片樣式 */
+        .pending-card {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pending-info { font-size: 0.9em; line-height: 1.5; }
+        .btn-apply {
+            background: var(--success);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            width: auto;
+            margin-top: 0;
+        }
 
         @media (max-width: 640px) {
             body { padding: 12px; margin: 10px auto; }
             .card { padding: 18px; }
             .grid-3, .grid-2 { grid-template-columns: 1fr; }
+            .pending-card { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
     </style>
 </head>
@@ -147,6 +155,8 @@
     <h2>社團複式簿記記帳系統</h2>
     
     <form id="accountingForm">
+        <input type="hidden" id="fromFormRowIndex" value="">
+
         <div class="grid-2">
             <div class="form-group">
                 <label>交易日期</label>
@@ -166,17 +176,17 @@
         <div class="grid-2">
             <div class="form-group">
                 <label>交易摘要 / 事由說明 (選填)</label>
-                <input type="text" id="description" placeholder="例如：社會人士購買藍本教材">
+                <input type="text" id="description" placeholder="例如：張小明購買藍本教材">
             </div>
             <div class="form-group">
-                <label>教材數量 / 本數 (若涉及教材請填寫)</label>
+                <label>教材數量 / 本數</label>
                 <input type="number" id="quantity" placeholder="0" min="0" value="0">
             </div>
         </div>
 
-        <!-- 借方區塊（限制：資產、費損） -->
+        <!-- 借方區塊 (開放四大類) -->
         <div class="form-group">
-            <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 (僅限資產、費損)</div>
+            <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 / 負債減少</div>
             <div class="grid-3">
                 <div>
                     <label>大類</label>
@@ -203,9 +213,9 @@
             </div>
         </div>
 
-        <!-- 貸方區塊（限制：收入、負債） -->
+        <!-- 貸方區塊 (開放四大類) -->
         <div class="form-group">
-            <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 (僅限收入、負債)</div>
+            <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 / 負債增加</div>
             <div class="grid-3">
                 <div>
                     <label>大類</label>
@@ -238,7 +248,15 @@
     <div id="status" class="status"></div>
 </div>
 
-<!-- 看板 1: 教材庫存 -->
+<!-- 待審核表單看板 -->
+<div class="card">
+    <h3>📋 待審核 Google 表單交易</h3>
+    <div id="pendingFormsContainer">
+        <div style="color: #64748b;">載入待審核表單中...</div>
+    </div>
+</div>
+
+<!-- 庫存看板 -->
 <div class="card">
     <h3>📦 教材即時庫存看板</h3>
     <div id="inventoryContainer" class="inventory-grid">
@@ -246,7 +264,7 @@
     </div>
 </div>
 
-<!-- 看板 2: 各子項目累計金額 -->
+<!-- 各子項目累計 -->
 <div class="card">
     <h3>💰 各子項目累計金額統計</h3>
     <table class="totals-table">
@@ -263,19 +281,22 @@
 </div>
 
 <script>
-    // ⚠️ 請替換為您在 Google Apps Script 取得的 Web App URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxF-2LYhi-p_JvX2HE9zBu4b7SO6QGjzrs0qfzfBAbpLh1Okk1xNak8oluZ-k-Z-GfF/exec";
+    // ⚠️ 請替換為您的 Google Apps Script 部署 URL
+    const GAS_URL = "https://script.google.com/macros/library/d/1460wdnJndzKnBYoucQdwXR87mHZnJDSuYNGff_Tj3DEVgQsCSyEMQDXD/2";
 
     const accountTree = {
         "收入": {
             "教材收入": [
-                "社會人士藍本", "社會人士基礎黃本", "社會人士花甲子納音",
-                "學生藍本", "學生基礎黃本", "學生花甲子納音",
-                "易經占卜牌", "善本易經", "命理基礎篇"
+                "學生紫微斗數正統（黃本）", "社會人士紫微斗數正統（黃本）",
+                "學生紫微斗數論命實例（藍本）", "社會人士紫微斗數論命實例（藍本）",
+                "學生花甲子納音", "社會人士花甲子納音",
+                "善本易經", "學生易經占卜牌", "社會人士易經占卜牌",
+                "命理基礎篇", "神相全編"
             ],
             "社費收入": [
-                "社會人士週二", "社會人士週三", "社會人士都上",
-                "學生週二", "學生週三", "學生都上"
+                "學生週二", "社會人士週二",
+                "學生週三", "社會人士週三",
+                "學生合報", "社會人士合報"
             ]
         },
         "費損": {
@@ -285,8 +306,8 @@
         "資產": {
             "現金與存款": ["社團郵局帳戶", "現金"],
             "教材庫存": [
-                "藍本", "基礎黃本", "花甲子納音",
-                "易經占卜牌", "善本易經", "命理基礎篇"
+                "紫微斗數正統（黃本）", "紫微斗數論命實例（藍本）", "花甲子納音",
+                "善本易經", "易經占卜牌", "命理基礎篇", "神相全編"
             ]
         },
         "負債": {
@@ -294,10 +315,17 @@
         }
     };
 
-    // 借貸可選的大類限制
-    const allowedCategories = {
-        "debit": ["資產", "費損"],
-        "credit": ["收入", "負債"]
+    const priceRules = {
+        "紫微斗數正統（黃本）": { "學生": 200, "社會人士": 400 },
+        "紫微斗數論命實例（藍本）": { "學生": 300, "社會人士": 800 },
+        "花甲子納音": { "學生": 400, "社會人士": 1200 },
+        "善本易經": { "學生": 300, "社會人士": 300 },
+        "易經占卜牌": { "學生": 800, "社會人士": 1000 },
+        "命理基礎篇": { "學生": 200, "社會人士": 200 },
+        "神相全編": { "學生": 300, "社會人士": 300 },
+        "紫微斗數": { "學生": 200, "社會人士": 800 },
+        "易經占卜牌社費": { "學生": 200, "社會人士": 800 },
+        "合報": { "學生": 300, "社會人士": 1200 }
     };
 
     window.onload = function() {
@@ -310,7 +338,7 @@
     function initCategories(side) {
         const catSelect = document.getElementById(`${side}Category`);
         catSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
-        allowedCategories[side].forEach(cat => {
+        Object.keys(accountTree).forEach(cat => {
             const opt = document.createElement("option");
             opt.value = cat;
             opt.innerText = cat;
@@ -360,9 +388,102 @@
             if (data.result === "success") {
                 renderInventory(data.inventory);
                 renderSubTotals(data.subTotals);
+                renderPendingForms(data.pendingForms);
             }
         })
-        .catch(err => console.error("看板資料載入失敗:", err));
+        .catch(err => console.error("資料載入失敗:", err));
+    }
+
+    function renderPendingForms(forms) {
+        const container = document.getElementById('pendingFormsContainer');
+        container.innerHTML = "";
+        if (!forms || forms.length === 0) {
+            container.innerHTML = '<div style="color: #64748b;">目前沒有待審核的表單資料 🎉</div>';
+            return;
+        }
+
+        forms.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'pending-card';
+            card.innerHTML = `
+                <div class="pending-info">
+                    <strong>姓名：</strong>${item.name} (${item.identity})<br>
+                    <strong>社費：</strong>${item.fee || '無'}<br>
+                    <strong>書籍：</strong>${item.books || '無'}
+                </div>
+                <button class="btn-apply" onclick="applyFormToRecord(${JSON.stringify(item).replace(/"/g, '&quot;')})">帶入表單審核</button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function applyFormToRecord(item) {
+        document.getElementById('fromFormRowIndex').value = item.rowIndex;
+        document.getElementById('description').value = `${item.name} 表單申購`;
+        
+        // 預設借方：現金
+        document.getElementById('debitCategory').value = "資產";
+        updateMainOptions('debit');
+        document.getElementById('debitMain').value = "現金與存款";
+        updateSubOptions('debit');
+        document.getElementById('debitSub').value = "現金";
+
+        // 預設貸方：根據書籍或社費
+        document.getElementById('creditCategory').value = "收入";
+        updateMainOptions('credit');
+
+        let price = 0;
+        let qty = 0;
+
+        if (item.books) {
+            document.getElementById('creditMain').value = "教材收入";
+            updateSubOptions('credit');
+            qty = 1;
+            document.getElementById('quantity').value = 1;
+
+            if (item.books.includes("正統")) {
+                document.getElementById('creditSub').value = `${item.identity}紫微斗數正統（黃本）`;
+                price = priceRules["紫微斗數正統（黃本）"][item.identity];
+            } else if (item.books.includes("論命實例")) {
+                document.getElementById('creditSub').value = `${item.identity}紫微斗數論命實例（藍本）`;
+                price = priceRules["紫微斗數論命實例（藍本）"][item.identity];
+            } else if (item.books.includes("納音")) {
+                document.getElementById('creditSub').value = `${item.identity}花甲子納音`;
+                price = priceRules["花甲子納音"][item.identity];
+            } else if (item.books.includes("善本易經")) {
+                document.getElementById('creditSub').value = "善本易經";
+                price = 300;
+            } else if (item.books.includes("占卜牌")) {
+                document.getElementById('creditSub').value = `${item.identity}易經占卜牌`;
+                price = priceRules["易經占卜牌"][item.identity];
+            } else if (item.books.includes("命理基礎篇")) {
+                document.getElementById('creditSub').value = "命理基礎篇";
+                price = 200;
+            } else if (item.books.includes("神相全編")) {
+                document.getElementById('creditSub').value = "神相全編";
+                price = 300;
+            }
+        } else if (item.fee) {
+            document.getElementById('creditMain').value = "社費收入";
+            updateSubOptions('credit');
+            document.getElementById('quantity').value = 0;
+
+            if (item.fee.includes("紫微")) {
+                document.getElementById('creditSub').value = item.identity === "學生" ? "學生週二" : "社會人士週二";
+                price = item.identity === "學生" ? 200 : 800;
+            } else if (item.fee.includes("占卜牌")) {
+                document.getElementById('creditSub').value = item.identity === "學生" ? "學生週三" : "社會人士週三";
+                price = item.identity === "學生" ? 200 : 800;
+            } else if (item.fee.includes("合報")) {
+                document.getElementById('creditSub').value = item.identity === "學生" ? "學生合報" : "社會人士合報";
+                price = item.identity === "學生" ? 300 : 1200;
+            }
+        }
+
+        document.getElementById('debitAmount').value = price;
+        document.getElementById('creditAmount').value = price;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function renderInventory(invData) {
@@ -425,7 +546,8 @@
             creditCategory: document.getElementById('creditCategory').value,
             creditMain: document.getElementById('creditMain').value,
             creditSub: document.getElementById('creditSub').value,
-            creditAmount: creditAmt
+            creditAmount: creditAmt,
+            fromFormRowIndex: document.getElementById('fromFormRowIndex').value
         };
 
         fetch(GAS_URL, {
@@ -438,6 +560,7 @@
                 statusDiv.style.color = "var(--success)";
                 statusDiv.innerText = "✅ 記帳成功！已同步寫入 Google 試算表。";
                 document.getElementById('accountingForm').reset();
+                document.getElementById('fromFormRowIndex').value = "";
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('quantity').value = "0";
                 updateMainOptions('debit');
@@ -458,5 +581,4 @@
 </script>
 
 </body>
-</html>
 </html>
