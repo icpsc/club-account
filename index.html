@@ -42,7 +42,7 @@
 
         .form-row {
             display: grid;
-            grid-template-columns: 0.8fr 1.1fr 1.2fr 0.9fr 0.7fr 1.2fr 40px;
+            grid-template-columns: 0.8fr 1.1fr 1.3fr 0.9fr 0.7fr 1.2fr 40px;
             gap: 8px;
             align-items: center;
             margin-bottom: 10px;
@@ -110,7 +110,7 @@
 
         .status { margin-top: 14px; font-weight: 600; text-align: center; font-size: 0.95em; }
 
-        /* 統計看板樣式 */
+        /* 統計看板 */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -207,7 +207,6 @@
     <div id="status" class="status"></div>
 </div>
 
-<!-- 待審核表單看板 -->
 <div class="card">
     <h3>📋 待審核 Google 表單申購</h3>
     <div id="pendingFormsContainer">
@@ -215,7 +214,6 @@
     </div>
 </div>
 
-<!-- 庫存看板 -->
 <div class="card">
     <h3>📦 易學社教材即時庫存</h3>
     <div id="inventoryContainer" class="inventory-grid">
@@ -223,7 +221,6 @@
     </div>
 </div>
 
-<!-- 財務統計看板 -->
 <div class="card">
     <h3>📊 社團財務統計看板</h3>
     
@@ -252,7 +249,6 @@
     </div>
 </div>
 
-<!-- 底部 QR Code 區塊 -->
 <div class="qr-section">
     <h4>📱 掃描填寫社團購買表單</h4>
     <img src="https://quickchart.io/qr?text=https://docs.google.com/forms/d/e/1FAIpQLSdkpG5yMaTAjyo8TS636vqCl90yro71XtId_9vBW15OZ2ICdA/viewform&size=140" alt="表單 QR Code">
@@ -261,11 +257,20 @@
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwo4wpgLNYLNB_OPAD9pyGskjWHUJ6aixnPDnHA4ZP7mewem4rHxpF5lSF46PYL1x1h/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ1HKdzLc8LoteRdf1iPVxPbwuD2YB7ZnrXwezvqcmR6ka8us569y16K-LdkFP4Pxo/exec";
 
     const accountStructure = {
         "期初開帳": {
-            "期初開帳": ["期初現金結餘", "期初黃本盤點", "期初藍本盤點", "期初納音盤點", "期初善本易經盤點", "期初易經占卜牌盤點", "期初命理基礎篇盤點", "期初神相全編盤點"]
+            "期初開帳": [
+                "期初現金結餘",
+                "紫微斗數正統（黃本）",
+                "紫微斗數論命實例（藍本）",
+                "花甲子納音",
+                "善本易經",
+                "易經占卜牌",
+                "命理基礎篇",
+                "神相全編"
+            ]
         },
         "收入": {
             "社費收入": ["學生週二", "社會人士週二", "學生週三", "社會人士週三", "學生合報", "社會人士合報"],
@@ -288,9 +293,21 @@
     };
 
     function addNewRow() {
-        if (document.querySelectorAll('.form-row').length >= 10) {
+        const rows = document.querySelectorAll('.form-row');
+        if (rows.length >= 10) {
             alert("一次最多新增 10 列明細喔！");
             return;
+        }
+
+        let lastType = "收入";
+        let lastCat = "";
+        let lastSub = "";
+
+        if (rows.length > 0) {
+            const lastRow = rows[rows.length - 1];
+            lastType = lastRow.querySelector('.row-type').value;
+            lastCat = lastRow.querySelector('.row-category').value;
+            lastSub = lastRow.querySelector('.row-sub').value;
         }
 
         rowCounter++;
@@ -336,7 +353,16 @@
         `;
 
         container.appendChild(rowDiv);
-        onTypeChange(rowId);
+
+        if (rows.length > 0) {
+            rowDiv.querySelector('.row-type').value = lastType;
+            onTypeChange(rowId);
+            rowDiv.querySelector('.row-category').value = lastCat;
+            onCategoryChange(rowId);
+            rowDiv.querySelector('.row-sub').value = lastSub;
+        } else {
+            onTypeChange(rowId);
+        }
     }
 
     function removeRow(rowId) {
@@ -560,7 +586,6 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = "✅ 成功批次寫入所有帳目！試算表已完成自動上色。";
                 
-                // 重置表單
                 document.getElementById('rowsContainer').innerHTML = "";
                 rowCounter = 0;
                 addNewRow();
