@@ -12,20 +12,17 @@
             --card-bg: #ffffff;
             --text: #334155;
             --border: #cbd5e1;
-            --debit-bg: #eff6ff;
-            --debit-text: #1d4ed8;
-            --credit-bg: #fff7ed;
-            --credit-text: #c2410c;
-            --success: #16a34a;
+            --income-color: #16a34a;
+            --expense-color: #dc2626;
             --danger: #dc2626;
-            --delete-hover: #b91c1c;
+            --danger-hover: #b91c1c;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            max-width: 880px;
+            max-width: 920px;
             margin: 30px auto;
             padding: 20px;
         }
@@ -33,26 +30,37 @@
         .card {
             background: var(--card-bg);
             border-radius: 12px;
-            padding: 28px;
+            padding: 24px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
             border: 1px solid #e2e8f0;
             margin-bottom: 24px;
         }
 
-        h2, h3 { color: var(--primary); margin-top: 0; letter-spacing: -0.025em; }
+        h2, h3, h4 { color: var(--primary); margin-top: 0; letter-spacing: -0.025em; }
         h2 { text-align: center; font-size: 1.6rem; margin-bottom: 24px; }
-        h3 { font-size: 1.25rem; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        h3 { font-size: 1.2rem; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
 
-        .form-group { margin-bottom: 18px; }
-        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.9em; color: #475569; }
+        .form-row {
+            display: grid;
+            grid-template-columns: 0.8fr 1.1fr 1.2fr 0.9fr 0.7fr 1.2fr 40px;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 0.85em; color: #475569; }
         
         input, select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 1px solid var(--border);
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 14px;
+            font-size: 13px;
             background-color: #fff;
             color: #0f172a;
         }
@@ -63,22 +71,31 @@
             box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
         }
 
-        .section-title {
+        .btn-add-row {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px dashed var(--primary);
+            padding: 10px;
+            border-radius: 8px;
             font-weight: 700;
-            padding: 10px 14px;
-            border-radius: 6px;
-            margin-bottom: 14px;
-            font-size: 0.95em;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 16px;
         }
+        .btn-add-row:hover { background: #dbeafe; }
 
-        .debit-header { background-color: var(--debit-bg); color: var(--debit-text); border-left: 4px solid var(--debit-text); }
-        .credit-header { background-color: var(--credit-bg); color: var(--credit-text); border-left: 4px solid var(--credit-text); }
-        .amount-header { background-color: #f1f5f9; color: #334155; border-left: 4px solid #64748b; text-align: center; margin-top: 24px;}
+        .btn-remove-row {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 6px;
+            height: 34px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .btn-remove-row:hover { background: #fca5a5; }
 
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-        button {
+        .submit-btn {
             background-color: var(--primary);
             color: white;
             border: none;
@@ -89,106 +106,84 @@
             cursor: pointer;
             width: 100%;
         }
-        button:hover { background-color: var(--primary-hover); }
+        .submit-btn:hover { background-color: var(--primary-hover); }
 
-        .status { margin-top: 18px; font-weight: 600; text-align: center; font-size: 0.95em; }
+        .status { margin-top: 14px; font-weight: 600; text-align: center; font-size: 0.95em; }
 
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        .inventory-item {
-            background: #f1f5f9;
-            border-radius: 8px;
-            padding: 12px 16px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .inventory-item .title { font-size: 0.85em; color: #64748b; font-weight: 600; }
-        .inventory-item .count { font-size: 1.3rem; font-weight: 700; color: #0f172a; margin-top: 4px; }
-
-        /* 四大類統計看板樣式 */
-        .totals-grid {
+        /* 統計看板樣式 */
+        .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
         }
-        .totals-card {
+        .dash-card {
             background: #fff;
-            border: 1px solid #e2e8f0;
             border-radius: 10px;
             padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
         }
-        .totals-card h4 {
-            margin-top: 0;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .totals-list { list-style: none; padding: 0; margin: 0; font-size: 0.95em; }
-        .totals-list li {
+        .dash-card.income-card { border-top: 4px solid var(--income-color); }
+        .dash-card.expense-card { border-top: 4px solid var(--expense-color); }
+
+        .dash-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
+        .dash-list li {
             display: flex;
             justify-content: space-between;
             padding: 6px 0;
             border-bottom: 1px dashed #f1f5f9;
         }
-        .totals-list li:last-child { border-bottom: none; }
-        .totals-amt { font-weight: 700; }
-        .h-asset { color: #0369a1; }
-        .h-liab { color: #52525b; }
-        .h-inc { color: #16a34a; }
-        .h-exp { color: #b91c1c; }
 
-        /* 待審核卡片與按鈕群 */
+        .total-summary-card {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .total-summary-val { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-top: 4px; }
+
+        /* 庫存看板 */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .inventory-item {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px 14px;
+            border-left: 4px solid var(--primary);
+        }
+        .inventory-item .title { font-size: 0.8em; color: #64748b; font-weight: 600; }
+        .inventory-item .count { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-top: 2px; }
+
+        /* 待審核區塊 */
         .pending-card {
             background: #ffffff;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 16px;
+            margin-bottom: 14px;
         }
         .pending-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
-        .pending-title { font-weight: 700; font-size: 1.05em; color: var(--primary); }
-        .entry-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9em;
-            margin-bottom: 14px;
-        }
-        .entry-table th, .entry-table td { padding: 8px; text-align: left; border-bottom: 1px dashed #e2e8f0; }
-        .entry-table th { background: #f8fafc; color: #64748b; }
-        
-        .action-btns { display: flex; gap: 10px; }
-        .btn-approve { background: var(--success); }
-        .btn-approve:hover { background: #15803d; }
-        .btn-delete { background: var(--danger); width: 30%; }
-        .btn-delete:hover { background: var(--delete-hover); }
+        .action-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-approve { background: var(--income-color); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; flex: 1; }
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 30%; }
 
-        /* QR Code 區塊 */
-        .qr-section { text-align: center; padding: 20px 0; color: #475569; }
-        .qr-section img { border-radius: 10px; border: 1px solid #cbd5e1; padding: 10px; background: #fff; margin-bottom: 10px; }
-        .qr-section a { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .qr-section a:hover { text-decoration: underline; }
+        /* QR Code */
+        .qr-section { text-align: center; padding: 16px 0; color: #475569; }
+        .qr-section img { border-radius: 8px; border: 1px solid #cbd5e1; padding: 8px; background: #fff; margin-bottom: 8px; }
 
-        @media (max-width: 640px) {
-            .grid-3, .grid-2, .totals-grid { grid-template-columns: 1fr; }
-            .action-btns { flex-direction: column; }
-            .btn-delete { width: 100%; }
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -197,80 +192,16 @@
 <div class="card">
     <h2>台大易學研究社 記帳系統</h2>
     
-    <form id="accountingForm">
-        <div class="grid-2">
-            <div class="form-group">
-                <label>交易日期</label>
-                <input type="date" id="date" required>
-            </div>
-            <div class="form-group">
-                <label>教材異動數量 (本/套，非教材填 0)</label>
-                <input type="number" id="quantity" placeholder="0" min="0" value="0" required>
-            </div>
-        </div>
+    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-weight: 600; color: #475569;">交易日期：<input type="date" id="commonDate" style="width: auto; display: inline-block;"></div>
+        <div style="font-weight: 700; color: var(--primary);">本次填寫總金額：$<span id="totalFormAmount">0</span></div>
+    </div>
 
-        <div class="form-group">
-            <label>交易摘要 / 事由說明 (選填)</label>
-            <input type="text" id="description" placeholder="例如：張小明購買紫微斗數正統">
-        </div>
+    <form id="multiAccountingForm">
+        <div id="rowsContainer"></div>
 
-        <!-- 借方區塊 -->
-        <div class="form-group">
-            <div class="section-title debit-header">【借方 Debit】資金流入 / 費用發生 / 負債減少</div>
-            <div class="grid-3">
-                <div>
-                    <label>大類</label>
-                    <select id="debitCategory" onchange="updateMainOptions('debit')" required>
-                        <option value="">-- 請選擇 --</option>
-                    </select>
-                </div>
-                <div>
-                    <label>主項目</label>
-                    <select id="debitMain" onchange="updateSubOptions('debit')" required>
-                        <option value="">-- 先選大類 --</option>
-                    </select>
-                </div>
-                <div>
-                    <label>次級子項目</label>
-                    <select id="debitSub" required>
-                        <option value="">-- 先選主項目 --</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- 貸方區塊 -->
-        <div class="form-group">
-            <div class="section-title credit-header">【貸方 Credit】資金流出 / 收入增加 / 負債增加</div>
-            <div class="grid-3">
-                <div>
-                    <label>大類</label>
-                    <select id="creditCategory" onchange="updateMainOptions('credit')" required>
-                        <option value="">-- 請選擇 --</option>
-                    </select>
-                </div>
-                <div>
-                    <label>主項目</label>
-                    <select id="creditMain" onchange="updateSubOptions('credit')" required>
-                        <option value="">-- 先選大類 --</option>
-                    </select>
-                </div>
-                <div>
-                    <label>次級子項目</label>
-                    <select id="creditSub" required>
-                        <option value="">-- 先選主項目 --</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- 單一交易金額 -->
-        <div class="form-group">
-            <div class="section-title amount-header">💰 本次交易金額</div>
-            <input type="number" id="transactionAmount" placeholder="請輸入金額 ($)" min="1" style="text-align: center; font-size: 1.1em; font-weight: 700;" required>
-        </div>
-
-        <button type="submit" id="submitBtn">提交單筆帳目</button>
+        <button type="button" class="btn-add-row" onclick="addNewRow()">➕ 新增下一筆明細</button>
+        <button type="submit" class="submit-btn" id="submitBtn">提交所有明細分錄</button>
     </form>
 
     <div id="status" class="status"></div>
@@ -278,7 +209,7 @@
 
 <!-- 待審核表單看板 -->
 <div class="card">
-    <h3>📋 待審核 Google 表單交易</h3>
+    <h3>📋 待審核 Google 表單申購</h3>
     <div id="pendingFormsContainer">
         <div style="color: #64748b;">載入待審核表單中...</div>
     </div>
@@ -292,110 +223,163 @@
     </div>
 </div>
 
-<!-- 四大類各子項目累計 -->
+<!-- 財務統計看板 -->
 <div class="card">
-    <h3>📊 各子項目累計金額統計</h3>
-    <div id="subTotalsContainer" class="totals-grid">
-        <div style="color: #64748b; grid-column: 1 / -1;">載入統計數據中...</div>
+    <h3>📊 社團財務統計看板</h3>
+    
+    <div id="initialFundBanner" style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 14px; font-weight: 600;">
+        🏛️ 期初移交資金：$<span id="initialFundVal">0</span>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dash-card income-card">
+            <h4>📈 本期收入 (Income)</h4>
+            <ul class="dash-list" id="incomeList"><li>尚無記錄</li></ul>
+            <div style="text-align: right; margin-top: 10px; font-weight: 700; color: var(--income-color);">收入小計：$<span id="incomeSubTotal">0</span></div>
+        </div>
+
+        <div class="dash-card expense-card">
+            <h4>📉 本期支出 (Expenses)</h4>
+            <ul class="dash-list" id="expenseList"><li>尚無記錄</li></ul>
+            <div style="text-align: right; margin-top: 10px; font-weight: 700; color: var(--expense-color);">支出小計：$<span id="expenseSubTotal">0</span></div>
+        </div>
+    </div>
+
+    <div class="total-summary-card">
+        <div style="font-weight: 700; color: #475569;">💰 社團目前總結餘 (Net Balance)</div>
+        <div class="total-summary-val">$<span id="netBalanceVal">0</span></div>
+        <div style="font-size: 0.85em; color: #64748b; margin-top: 4px;">(計算公式：期初資金 + 本期收入 - 本期支出)</div>
     </div>
 </div>
 
 <!-- 底部 QR Code 區塊 -->
 <div class="qr-section">
-    <h4>📱 掃描填寫社團表單</h4>
-    <img src="https://quickchart.io/qr?text=https://docs.google.com/forms/d/e/1FAIpQLSdkpG5yMaTAjyo8TS636vqCl90yro71XtId_9vBW15OZ2ICdA/viewform&size=150" alt="表單 QR Code">
-    <div><a href="https://docs.google.com/forms/d/e/1FAIpQLSdkpG5yMaTAjyo8TS636vqCl90yro71XtId_9vBW15OZ2ICdA/viewform" target="_blank">點此開啟表單連結</a></div>
+    <h4>📱 掃描填寫社團購買表單</h4>
+    <img src="https://quickchart.io/qr?text=https://docs.google.com/forms/d/e/1FAIpQLSdkpG5yMaTAjyo8TS636vqCl90yro71XtId_9vBW15OZ2ICdA/viewform&size=140" alt="表單 QR Code">
+    <div><a href="https://docs.google.com/forms/d/e/1FAIpQLSdkpG5yMaTAjyo8TS636vqCl90yro71XtId_9vBW15OZ2ICdA/viewform" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">點此開啟表單連結</a></div>
 </div>
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxruQzLFq9XrXNo_Z7gSnuUbeurGlEubiIqxeAF1kPgWEw6om5tcLDmJLPcwGFlddL2/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwo4wpgLNYLNB_OPAD9pyGskjWHUJ6aixnPDnHA4ZP7mewem4rHxpF5lSF46PYL1x1h/exec";
 
-    const accountTree = {
+    const accountStructure = {
+        "期初開帳": {
+            "期初開帳": ["期初現金結餘", "期初黃本盤點", "期初藍本盤點", "期初納音盤點", "期初善本易經盤點", "期初易經占卜牌盤點", "期初命理基礎篇盤點", "期初神相全編盤點"]
+        },
         "收入": {
-            "教材收入": [
-                "學生紫微斗數正統（黃本）", "社會人士紫微斗數正統（黃本）",
-                "學生紫微斗數論命實例（藍本）", "社會人士紫微斗數論命實例（藍本）",
-                "學生花甲子納音", "社會人士花甲子納音",
-                "善本易經", "學生易經占卜牌", "社會人士易經占卜牌",
-                "命理基礎篇", "神相全編"
-            ],
-            "社費收入": [
-                "學生週二", "社會人士週二",
-                "學生週三", "社會人士週三",
-                "學生合報", "社會人士合報"
-            ]
+            "社費收入": ["學生週二", "社會人士週二", "學生週三", "社會人士週三", "學生合報", "社會人士合報"],
+            "教材收入": ["學生黃本", "社會人士黃本", "學生藍本", "社會人士藍本", "學生納音", "社會人士納音", "善本易經", "學生易經占卜牌", "社會人士易經占卜牌", "命理基礎篇", "神相全編"],
+            "其他收入": ["活動收入", "課外組補助", "其他收入"]
         },
-        "費損": {
-            "活動支出": ["場地租用", "茶水餐飲", "宣傳印製", "老師", "社員聚餐", "其他"],
-            "行政支出": ["教室租用", "影印費", "軟體訂閱", "其他"]
-        },
-        "資產": {
-            "現金與存款": ["社團郵局帳戶", "現金"],
-            "教材庫存": [
-                "紫微斗數正統（黃本）", "紫微斗數論命實例（藍本）", "花甲子納音",
-                "善本易經", "易經占卜牌", "命理基礎篇", "神相全編"
-            ]
-        },
-        "負債": {
-            "預收款": ["教材"]
+        "支出": {
+            "活動支出": ["場地租用", "茶水餐飲", "宣傳印製", "講師鐘點費", "社員聚餐", "活動道具與雜支"],
+            "行政支出": ["教室租用", "影印費", "軟體與訂閱費", "教材進貨成本", "行政雜支"]
         }
-    };
-
-    const iconMap = {
-        "現金與存款": "💵", "教材庫存": "📦", "預收款": "⏳",
-        "教材收入": "📚", "社費收入": "🎟️",
-        "活動支出": "🎪", "行政支出": "🏛️"
     };
 
     let cachedPendingForms = [];
+    let rowCounter = 0;
 
     window.onload = function() {
-        document.getElementById('date').valueAsDate = new Date();
-        initCategories('debit');
-        initCategories('credit');
+        document.getElementById('commonDate').valueAsDate = new Date();
+        addNewRow();
         fetchDashboardData();
     };
 
-    function initCategories(side) {
-        const catSelect = document.getElementById(`${side}Category`);
-        catSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
-        Object.keys(accountTree).forEach(cat => {
-            const opt = document.createElement("option");
-            opt.value = cat;
-            opt.innerText = cat;
-            catSelect.appendChild(opt);
-        });
+    function addNewRow() {
+        if (document.querySelectorAll('.form-row').length >= 10) {
+            alert("一次最多新增 10 列明細喔！");
+            return;
+        }
+
+        rowCounter++;
+        const rowId = `row_${rowCounter}`;
+        const container = document.getElementById('rowsContainer');
+
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'form-row';
+        rowDiv.id = rowId;
+
+        rowDiv.innerHTML = `
+            <div>
+                <label>收/支</label>
+                <select onchange="onTypeChange('${rowId}')" class="row-type" required>
+                    <option value="收入">收入 (+)</option>
+                    <option value="支出">支出 (-)</option>
+                    <option value="期初開帳">期初開帳</option>
+                </select>
+            </div>
+            <div>
+                <label>大類</label>
+                <select onchange="onCategoryChange('${rowId}')" class="row-category" required></select>
+            </div>
+            <div>
+                <label>子項目</label>
+                <select class="row-sub" required></select>
+            </div>
+            <div>
+                <label>金額 ($)</label>
+                <input type="number" class="row-amount" placeholder="0" min="0" oninput="calculateTotalAmount()" required>
+            </div>
+            <div>
+                <label>數量(本)</label>
+                <input type="number" class="row-qty" placeholder="0" min="0" value="0" required>
+            </div>
+            <div>
+                <label>摘要/備註</label>
+                <input type="text" class="row-desc" placeholder="事由說明">
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+                <button type="button" class="btn-remove-row" onclick="removeRow('${rowId}')">🗑️</button>
+            </div>
+        `;
+
+        container.appendChild(rowDiv);
+        onTypeChange(rowId);
     }
 
-    function updateMainOptions(side) {
-        const cat = document.getElementById(`${side}Category`).value;
-        const mainSelect = document.getElementById(`${side}Main`);
-        const subSelect = document.getElementById(`${side}Sub`);
+    function removeRow(rowId) {
+        const rows = document.querySelectorAll('.form-row');
+        if (rows.length <= 1) {
+            alert("最少需要保留一列輸入欄！");
+            return;
+        }
+        document.getElementById(rowId).remove();
+        calculateTotalAmount();
+    }
 
-        mainSelect.innerHTML = '<option value="">-- 請選擇主項目 --</option>';
-        subSelect.innerHTML = '<option value="">-- 先選主項目 --</option>';
+    function onTypeChange(rowId) {
+        const row = document.getElementById(rowId);
+        const type = row.querySelector('.row-type').value;
+        const catSelect = row.querySelector('.row-category');
 
-        if (cat && accountTree[cat]) {
-            Object.keys(accountTree[cat]).forEach(main => {
-                const opt = document.createElement("option");
-                opt.value = main;
-                opt.innerText = main;
-                mainSelect.appendChild(opt);
+        catSelect.innerHTML = "";
+        let targetType = type === "期初開帳" ? "期初開帳" : type;
+
+        if (accountStructure[targetType]) {
+            Object.keys(accountStructure[targetType]).forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                catSelect.appendChild(opt);
             });
         }
+        onCategoryChange(rowId);
     }
 
-    function updateSubOptions(side) {
-        const cat = document.getElementById(`${side}Category`).value;
-        const main = document.getElementById(`${side}Main`).value;
-        const subSelect = document.getElementById(`${side}Sub`);
+    function onCategoryChange(rowId) {
+        const row = document.getElementById(rowId);
+        const type = row.querySelector('.row-type').value;
+        const cat = row.querySelector('.row-category').value;
+        const subSelect = row.querySelector('.row-sub');
 
-        subSelect.innerHTML = '<option value="">-- 請選擇次級子項目 --</option>';
+        subSelect.innerHTML = "";
+        let targetType = type === "期初開帳" ? "期初開帳" : type;
 
-        if (cat && main && accountTree[cat][main]) {
-            accountTree[cat][main].forEach(sub => {
-                const opt = document.createElement("option");
+        if (accountStructure[targetType] && accountStructure[targetType][cat]) {
+            accountStructure[targetType][cat].forEach(sub => {
+                const opt = document.createElement('option');
                 opt.value = sub;
                 opt.innerText = sub;
                 subSelect.appendChild(opt);
@@ -403,148 +387,46 @@
         }
     }
 
+    function calculateTotalAmount() {
+        let total = 0;
+        document.querySelectorAll('.row-amount').forEach(input => {
+            total += Number(input.value) || 0;
+        });
+        document.getElementById('totalFormAmount').innerText = total.toLocaleString();
+    }
+
     function fetchDashboardData() {
         fetch(GAS_URL)
         .then(res => res.json())
         .then(data => {
             if (data.result === "success") {
+                document.getElementById('initialFundVal').innerText = data.initialFund.toLocaleString();
+                document.getElementById('incomeSubTotal').innerText = data.totalIncome.toLocaleString();
+                document.getElementById('expenseSubTotal').innerText = data.totalExpense.toLocaleString();
+                document.getElementById('netBalanceVal').innerText = data.netBalance.toLocaleString();
+
                 renderInventory(data.inventory);
-                renderStructuredTotals(data.structuredTotals);
+                renderDashList('incomeList', data.incomeTotals);
+                renderDashList('expenseList', data.expenseTotals);
+                
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
             }
-        })
-        .catch(err => console.error("資料載入失敗:", err));
+        });
     }
 
-    function renderPendingForms(forms) {
-        const container = document.getElementById('pendingFormsContainer');
-        container.innerHTML = "";
-        if (!forms || forms.length === 0) {
-            container.innerHTML = '<div style="color: #64748b;">目前沒有待審核的表單資料 🎉</div>';
+    function renderDashList(elementId, dataMap) {
+        const list = document.getElementById(elementId);
+        list.innerHTML = "";
+        const keys = Object.keys(dataMap);
+        if (keys.length === 0) {
+            list.innerHTML = "<li>尚無記錄</li>";
             return;
         }
-
-        forms.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'pending-card';
-            
-            let tableRows = `
-                <tr>
-                    <td style="color:var(--debit-text); font-weight:700;">【借】 ${item.debitEntry.cat}-${item.debitEntry.main}</td>
-                    <td>${item.debitEntry.sub}</td>
-                    <td style="text-align:right;">$${item.debitEntry.amount.toLocaleString()}</td>
-                    <td style="text-align:center;">0</td>
-                </tr>
-            `;
-
-            item.creditEntries.forEach(c => {
-                tableRows += `
-                    <tr>
-                        <td style="color:var(--credit-text); font-weight:700;">【貸】 ${c.cat}-${c.main}</td>
-                        <td>${c.sub}</td>
-                        <td style="text-align:right;">$${c.amount.toLocaleString()}</td>
-                        <td style="text-align:center;">${c.qty}</td>
-                    </tr>
-                `;
-            });
-
-            card.innerHTML = `
-                <div class="pending-header">
-                    <div class="pending-title">📋 申購人：${item.name} (${item.identity})</div>
-                    <div style="font-weight:700; color:var(--primary);">傳票總金額：$${item.totalAmount.toLocaleString()}</div>
-                </div>
-                <table class="entry-table">
-                    <thead>
-                        <tr>
-                            <th>借/貸 & 項目大類</th>
-                            <th>次級子項目</th>
-                            <th style="text-align:right;">金額 ($)</th>
-                            <th style="text-align:center;">數量</th>
-                        </tr>
-                    </thead>
-                    <tbody>${tableRows}</tbody>
-                </table>
-                <div class="action-btns">
-                    <button class="btn-approve" onclick="approveBatchForm(${index})">✅ 核准入帳</button>
-                    <button class="btn-delete" onclick="deleteForm(${index})">🗑️ 廢棄刪除</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function approveBatchForm(index) {
-        const item = cachedPendingForms[index];
-        if (!item) return;
-
-        const statusDiv = document.getElementById('status');
-        statusDiv.style.color = "#64748b";
-        statusDiv.innerText = `⏳ 正在將 ${item.name} 的複合分錄寫入正式帳冊...`;
-
-        const todayStr = new Date().toISOString().split('T')[0];
-        const desc = `${item.name} 表單申購`;
-        const batchRows = [];
-
-        // 1. 借方列
-        batchRows.push({
-            date: todayStr,
-            description: desc,
-            debitCategory: item.debitEntry.cat,
-            debitMain: item.debitEntry.main,
-            debitSub: item.debitEntry.sub,
-            debitAmount: item.debitEntry.amount,
-            creditCategory: "", creditMain: "", creditSub: "", creditAmount: 0,
-            quantity: 0
-        });
-
-        // 2. 貸方列
-        item.creditEntries.forEach(c => {
-            batchRows.push({
-                date: todayStr,
-                description: desc,
-                debitCategory: "", debitMain: "", debitSub: "", debitAmount: 0,
-                creditCategory: c.cat,
-                creditMain: c.main,
-                creditSub: c.sub,
-                creditAmount: c.amount,
-                quantity: c.qty
-            });
-        });
-
-        fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ batchRows: batchRows, fromFormRowIndex: item.rowIndex })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.result === "success") {
-                statusDiv.style.color = "var(--success)";
-                statusDiv.innerText = `✅ 成功入帳 ${item.name} 的表單交易！`;
-                fetchDashboardData();
-            }
-        });
-    }
-
-    function deleteForm(index) {
-        const item = cachedPendingForms[index];
-        if (!item || !confirm(`確定要廢棄刪除 ${item.name} 的申購單嗎？此操作不可逆。`)) return;
-
-        const statusDiv = document.getElementById('status');
-        statusDiv.style.color = "#64748b";
-        statusDiv.innerText = "⏳ 正在廢棄表單...";
-
-        fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "delete", fromFormRowIndex: item.rowIndex })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.result === "success") {
-                statusDiv.style.color = "var(--success)";
-                statusDiv.innerText = "🗑️ 該筆表單已成功廢棄。";
-                fetchDashboardData();
-            }
+        keys.forEach(k => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${k}</span><span style="font-weight:700;">$${dataMap[k].toLocaleString()}</span>`;
+            list.appendChild(li);
         });
     }
 
@@ -559,75 +441,130 @@
         });
     }
 
-    function renderStructuredTotals(totalsData) {
-        const container = document.getElementById('subTotalsContainer');
+    function renderPendingForms(forms) {
+        const container = document.getElementById('pendingFormsContainer');
         container.innerHTML = "";
+        if (!forms || forms.length === 0) {
+            container.innerHTML = '<div style="color: #64748b;">目前沒有待審核的表單資料 🎉</div>';
+            return;
+        }
 
-        const config = [
-            { cat: "資產", title: "🏦 資產類", cls: "h-asset" },
-            { cat: "負債", title: "💀 負債類", cls: "h-liab" },
-            { cat: "收入", title: "💵 收入類", cls: "h-inc" },
-            { cat: "費損", title: "💸 費損類", cls: "h-exp" }
-        ];
+        forms.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'pending-card';
+            
+            let itemRows = "";
+            item.items.forEach(it => {
+                itemRows += `<div style="font-size:0.9em; color:#475569; margin-top:4px;">• ${it.category} - ${it.subItem} ($${it.amount})</div>`;
+            });
 
-        config.forEach(group => {
-            const block = document.createElement('div');
-            block.className = 'totals-card';
-            
-            let html = `<h4 class="${group.cls}">${group.title}</h4><ul class="totals-list">`;
-            const items = totalsData[group.cat] || {};
-            
-            if(Object.keys(items).length === 0) {
-                html += `<li style="color:#94a3b8;">尚無記錄</li>`;
-            } else {
-                for (let key in items) {
-                    let mainTitle = key.split(' - ')[0];
-                    let icon = iconMap[mainTitle] || "🔹";
-                    html += `<li><span>${icon} ${key}</span><span class="totals-amt">$${items[key].toLocaleString()}</span></li>`;
-                }
-            }
-            html += `</ul>`;
-            block.innerHTML = html;
-            container.appendChild(block);
+            card.innerHTML = `
+                <div class="pending-header">
+                    <div style="font-weight:700; color:var(--primary);">📋 申購人：${item.name} (${item.identity})</div>
+                    <div style="font-weight:700; color:var(--income-color);">總金額：$${item.totalAmount.toLocaleString()}</div>
+                </div>
+                ${itemRows}
+                <div class="action-btns">
+                    <button class="btn-approve" onclick="approveForm(${index})">✅ 核准入帳</button>
+                    <button class="btn-delete" onclick="deleteForm(${index})">🗑️ 廢棄刪除</button>
+                </div>
+            `;
+            container.appendChild(card);
         });
     }
 
-    document.getElementById('accountingForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    function approveForm(index) {
+        const item = cachedPendingForms[index];
+        if (!item) return;
+
         const statusDiv = document.getElementById('status');
-        const amount = Number(document.getElementById('transactionAmount').value);
-
         statusDiv.style.color = "#64748b";
-        statusDiv.innerText = "⏳ 帳目發送中，請稍候...";
-        document.getElementById('submitBtn').disabled = true;
+        statusDiv.innerText = `⏳ 正在將 ${item.name} 的表單資料寫入正式帳冊...`;
 
-        const payload = {
-            date: document.getElementById('date').value,
-            description: document.getElementById('description').value,
-            quantity: Number(document.getElementById('quantity').value) || 0,
-            debitCategory: document.getElementById('debitCategory').value,
-            debitMain: document.getElementById('debitMain').value,
-            debitSub: document.getElementById('debitSub').value,
-            creditCategory: document.getElementById('creditCategory').value,
-            creditMain: document.getElementById('creditMain').value,
-            creditSub: document.getElementById('creditSub').value,
-            amount: amount 
-        };
+        const todayStr = new Date().toISOString().split('T')[0];
+        const batchRows = [];
+
+        item.items.forEach(it => {
+            batchRows.push({
+                date: todayStr,
+                type: "收入",
+                category: it.category,
+                subItem: it.subItem,
+                amount: it.amount,
+                quantity: it.qty,
+                description: `${item.name} 表單申購`
+            });
+        });
 
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ batchRows: batchRows, fromFormRowIndex: item.rowIndex })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                statusDiv.style.color = "var(--income-color)";
+                statusDiv.innerText = `✅ 成功入帳 ${item.name} 的表單資料！`;
+                fetchDashboardData();
+            }
+        });
+    }
+
+    function deleteForm(index) {
+        const item = cachedPendingForms[index];
+        if (!item || !confirm(`確定要廢棄刪除 ${item.name} 的申購單嗎？`)) return;
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "delete", fromFormRowIndex: item.rowIndex })
         })
         .then(res => res.json())
         .then(data => {
             if(data.result === "success") {
-                statusDiv.style.color = "var(--success)";
-                statusDiv.innerText = "✅ 記帳成功！已同步寫入 Google 試算表。";
-                document.getElementById('accountingForm').reset();
-                document.getElementById('date').valueAsDate = new Date();
-                document.getElementById('quantity').value = "0";
-                updateMainOptions('debit');
-                updateMainOptions('credit');
+                fetchDashboardData();
+            }
+        });
+    }
+
+    document.getElementById('multiAccountingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const statusDiv = document.getElementById('status');
+        const commonDate = document.getElementById('commonDate').value;
+
+        const rowElements = document.querySelectorAll('.form-row');
+        const batchRows = [];
+
+        rowElements.forEach(row => {
+            batchRows.push({
+                date: commonDate,
+                type: row.querySelector('.row-type').value,
+                category: row.querySelector('.row-category').value,
+                subItem: row.querySelector('.row-sub').value,
+                amount: Number(row.querySelector('.row-amount').value) || 0,
+                quantity: Number(row.querySelector('.row-qty').value) || 0,
+                description: row.querySelector('.row-desc').value
+            });
+        });
+
+        statusDiv.style.color = "#64748b";
+        statusDiv.innerText = "⏳ 批次寫入帳目中...";
+        document.getElementById('submitBtn').disabled = true;
+
+        fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({ batchRows: batchRows })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === "success") {
+                statusDiv.style.color = "var(--income-color)";
+                statusDiv.innerText = "✅ 成功批次寫入所有帳目！試算表已完成自動上色。";
+                
+                // 重置表單
+                document.getElementById('rowsContainer').innerHTML = "";
+                rowCounter = 0;
+                addNewRow();
+                calculateTotalAmount();
                 fetchDashboardData();
             } else {
                 throw new Error(data.message);
@@ -635,7 +572,7 @@
         })
         .catch(err => {
             statusDiv.style.color = "var(--danger)";
-            statusDiv.innerText = "❌ 發送失敗！請檢查網路連線或 Apps Script 部署 URL 是否正確。";
+            statusDiv.innerText = "❌ 發送失敗！請檢查 Apps Script 部署 URL 是否正確。";
         })
         .finally(() => {
             document.getElementById('submitBtn').disabled = false;
