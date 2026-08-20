@@ -177,7 +177,6 @@
         .btn-approve { background: var(--income-color); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; flex: 1; }
         .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 30%; }
 
-        /* QR Code */
         .qr-section { text-align: center; padding: 16px 0; color: #475569; }
         .qr-section img { border-radius: 8px; border: 1px solid #cbd5e1; padding: 8px; background: #fff; margin-bottom: 8px; }
 
@@ -257,7 +256,7 @@
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ1HKdzLc8LoteRdf1iPVxPbwuD2YB7ZnrXwezvqcmR6ka8us569y16K-LdkFP4Pxo/exec";
+    const GAS_URL = "https://script.google.com/macros/s/您的SCRIPT_ID/exec";
 
     const accountStructure = {
         "期初開帳": {
@@ -484,9 +483,11 @@
                 itemRows += `<div style="font-size:0.9em; color:#475569; margin-top:4px;">• ${it.category} - ${it.subItem} ($${it.amount})</div>`;
             });
 
+            let emailNotice = item.email ? `<span style="font-size:0.85em; color:#2563eb;">(📧 收據信箱：${item.email})</span>` : '';
+
             card.innerHTML = `
                 <div class="pending-header">
-                    <div style="font-weight:700; color:var(--primary);">📋 申購人：${item.name} (${item.identity})</div>
+                    <div style="font-weight:700; color:var(--primary);">📋 申購人：${item.name} (${item.identity}) ${emailNotice}</div>
                     <div style="font-weight:700; color:var(--income-color);">總金額：$${item.totalAmount.toLocaleString()}</div>
                 </div>
                 ${itemRows}
@@ -499,16 +500,18 @@
         });
     }
 
+    // 局部刷新核准
     function approveForm(index) {
         const item = cachedPendingForms[index];
         if (!item) return;
 
         const statusDiv = document.getElementById('status');
         statusDiv.style.color = "#64748b";
-        statusDiv.innerText = `⏳ 正在將 ${item.name} 的表單資料寫入正式帳冊...`;
+        statusDiv.innerText = `⏳ 正在核准 ${item.name} 的表單資料...`;
 
         const todayStr = new Date().toISOString().split('T')[0];
         const batchRows = [];
+        let itemsSummaryArr = [];
 
         item.items.forEach(it => {
             batchRows.push({
@@ -520,25 +523,42 @@
                 quantity: it.qty,
                 description: `${item.name} 表單申購`
             });
+            itemsSummaryArr.push(`• ${it.category} - ${it.subItem}：NT$ ${it.amount}`);
         });
 
         fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ batchRows: batchRows, fromFormRowIndex: item.rowIndex })
+            body: JSON.stringify({ 
+                batchRows: batchRows, 
+                fromFormRowIndex: item.rowIndex,
+                email: item.email,
+                name: item.name,
+                itemsSummary: itemsSummaryArr.join("\n"),
+                totalAmount: item.totalAmount
+            })
         })
         .then(res => res.json())
         .then(data => {
             if (data.result === "success") {
                 statusDiv.style.color = "var(--income-color)";
-                statusDiv.innerText = `✅ 成功入帳 ${item.name} 的表單資料！`;
-                fetchDashboardData();
+                statusDiv.innerText = `✅ 成功入帳 ${item.name}！${item.email ? '已自動寄送收據信件。' : ''}`;
+                
+                // 局部更新庫存與待審核清單
+                renderInventory(data.inventory);
+                cachedPendingForms = data.pendingForms || [];
+                renderPendingForms(cachedPendingForms);
             }
         });
     }
 
+    // 局部刷新刪除
     function deleteForm(index) {
         const item = cachedPendingForms[index];
         if (!item || !confirm(`確定要廢棄刪除 ${item.name} 的申購單嗎？`)) return;
+
+        const statusDiv = document.getElementById('status');
+        statusDiv.style.color = "#64748b";
+        statusDiv.innerText = "⏳ 正在廢棄表單...";
 
         fetch(GAS_URL, {
             method: "POST",
@@ -547,7 +567,13 @@
         .then(res => res.json())
         .then(data => {
             if(data.result === "success") {
-                fetchDashboardData();
+                statusDiv.style.color = "var(--income-color)";
+                statusDiv.innerText = "🗑️ 該筆表單已成功廢棄。";
+                
+                // 局部更新庫存與待審核清單
+                renderInventory(data.inventory);
+                cachedPendingForms = data.pendingForms || [];
+                renderPendingForms(cachedPendingForms);
             }
         });
     }
@@ -597,6 +623,16 @@
         })
         .catch(err => {
             statusDiv.style.color = "var(--danger)";
+            statusDiv.innerText = "❌ 發送失敗！請檢查 Apps Script 部署 URL 是否正確。";
+        })
+        .finally(() => {
+            document.getElementById('submitBtn').disabled = false;
+        });
+    });
+</script>
+
+</body>
+</html>
             statusDiv.innerText = "❌ 發送失敗！請檢查 Apps Script 部署 URL 是否正確。";
         })
         .finally(() => {
