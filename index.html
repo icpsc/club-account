@@ -256,7 +256,7 @@
 
 <script>
     // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxsbEk8YWR-jGHZbK1GgppnshUvJnz_Xfc7t5OckwbAlEKanh1BVa1GbLk1YqhHDzOY/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzQuSNjgP8G-qbMfCBkFWC_F77iYJ99Pwghi_f-wLqXWsQY7mgvYksv-JOufQGF977P/exec";
 
     const accountStructure = {
         "期初開帳": {
@@ -273,7 +273,19 @@
         },
         "收入": {
             "社費收入": ["學生週二", "社會人士週二", "學生週三", "社會人士週三", "學生合報", "社會人士合報"],
-            "教材收入": ["學生黃本", "社會人士黃本", "學生藍本", "社會人士藍本", "學生納音", "社會人士納音", "善本易經", "學生易經占卜牌", "社會人士易經占卜牌", "命理基礎篇", "神相全編"],
+            "教材收入": [
+                "學生紫微斗數正統（黃本）", 
+                "社會人士紫微斗數正統（黃本）", 
+                "學生紫微斗數論命實例（藍本）", 
+                "社會人士紫微斗數論命實例（藍本）", 
+                "學生花甲子納音", 
+                "社會人士花甲子納音", 
+                "善本易經", 
+                "學生易經占卜牌", 
+                "社會人士易經占卜牌", 
+                "命理基礎篇", 
+                "神相全編"
+            ],
             "其他收入": ["活動收入", "課外組補助", "其他收入"]
         },
         "支出": {
@@ -500,7 +512,6 @@
         });
     }
 
-    // 局部刷新核准
     function approveForm(index) {
         const item = cachedPendingForms[index];
         if (!item) return;
@@ -543,7 +554,6 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = `✅ 成功入帳 ${item.name}！${item.email ? '已自動寄送收據信件。' : ''}`;
                 
-                // 局部更新庫存與待審核清單
                 renderInventory(data.inventory);
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
@@ -551,7 +561,6 @@
         });
     }
 
-    // 局部刷新刪除
     function deleteForm(index) {
         const item = cachedPendingForms[index];
         if (!item || !confirm(`確定要廢棄刪除 ${item.name} 的申購單嗎？`)) return;
@@ -570,7 +579,6 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = "🗑️ 該筆表單已成功廢棄。";
                 
-                // 局部更新庫存與待審核清單
                 renderInventory(data.inventory);
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
@@ -623,16 +631,6 @@
         })
         .catch(err => {
             statusDiv.style.color = "var(--danger)";
-            statusDiv.innerText = "❌ 發送失敗！請檢查 Apps Script 部署 URL 是否正確。";
-        })
-        .finally(() => {
-            document.getElementById('submitBtn').disabled = false;
-        });
-    });
-</script>
-
-</body>
-</html>
             statusDiv.innerText = "❌ 發送失敗！請檢查 Apps Script 部署 URL 是否正確。";
         })
         .finally(() => {
