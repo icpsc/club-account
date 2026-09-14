@@ -534,7 +534,7 @@
                 quantity: it.qty,
                 description: `${item.name} 表單申購`
             });
-            itemsSummaryArr.push(`• ${it.category} - ${it.subItem}：NT$ ${it.amount}`);
+            itemsSummaryArr.push(`•${it.subItem}：NT$ ${it.amount}`);
         });
 
         fetch(GAS_URL, {
