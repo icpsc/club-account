@@ -165,6 +165,7 @@
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 14px;
+            transition: all 0.2s ease;
         }
         .pending-header {
             display: flex;
@@ -174,8 +175,8 @@
             margin-bottom: 10px;
         }
         .action-btns { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-approve { background: var(--income-color); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; flex: 1; }
-        .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 30%; }
+        .btn-approve { background: var(--income-color); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; flex: 1; transition: opacity 0.2s; }
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 30%; transition: opacity 0.2s; }
 
         .qr-section { text-align: center; padding: 16px 0; color: #475569; }
         .qr-section img { border-radius: 8px; border: 1px solid #cbd5e1; padding: 8px; background: #fff; margin-bottom: 8px; }
@@ -255,8 +256,8 @@
 </div>
 
 <script>
-    // ⚠️ 請替換為您的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzQuSNjgP8G-qbMfCBkFWC_F77iYJ99Pwghi_f-wLqXWsQY7mgvYksv-JOufQGF977P/exec";
+    // ⚠️ 請保留或貼上您原有的 Google Apps Script 部署 URL
+    const GAS_URL = "https://script.google.com/macros/s/您的SCRIPT_ID/exec";
 
     const accountStructure = {
         "期初開帳": {
@@ -504,21 +505,36 @@
                 </div>
                 ${itemRows}
                 <div class="action-btns">
-                    <button class="btn-approve" onclick="approveForm(${index})">✅ 核准入帳</button>
-                    <button class="btn-delete" onclick="deleteForm(${index})">🗑️ 廢棄刪除</button>
+                    <button class="btn-approve" onclick="approveForm(${index}, this)">✅ 核准入帳</button>
+                    <button class="btn-delete" onclick="deleteForm(${index}, this)">🗑️ 廢棄刪除</button>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    function approveForm(index) {
+    // 核准入帳（具備前端立即防連點機制）
+    function approveForm(index, btnElement) {
         const item = cachedPendingForms[index];
         if (!item) return;
 
+        // 🛡️ 關鍵防呆：立刻鎖定整張卡片內的按鈕，杜絕重複點擊
+        const card = btnElement ? btnElement.closest('.pending-card') : null;
+        if (card) {
+            const btns = card.querySelectorAll('button');
+            btns.forEach(b => {
+                b.disabled = true;
+                b.style.opacity = '0.5';
+                b.style.cursor = 'not-allowed';
+            });
+        }
+        if (btnElement) {
+            btnElement.innerText = "⏳ 處理中，請勿重複點擊...";
+        }
+
         const statusDiv = document.getElementById('status');
         statusDiv.style.color = "#64748b";
-        statusDiv.innerText = `⏳ 正在核准 ${item.name} 的表單資料...`;
+        statusDiv.innerText = `⏳ 正在核准 ${item.name} 的表單資料，請稍候...`;
 
         const todayStr = new Date().toISOString().split('T')[0];
         const batchRows = [];
@@ -534,7 +550,8 @@
                 quantity: it.qty,
                 description: `${item.name} 表單申購`
             });
-            itemsSummaryArr.push(`•${it.subItem}：NT$ ${it.amount}`);
+            // ✉️ 已更新：移除「大類 - 」前綴，僅保留子項目名稱
+            itemsSummaryArr.push(`• ${it.subItem}：NT$ ${it.amount}`);
         });
 
         fetch(GAS_URL, {
@@ -554,16 +571,46 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = `✅ 成功入帳 ${item.name}！${item.email ? '已自動寄送收據信件。' : ''}`;
                 
+                // 局部更新庫存與待審核清單
                 renderInventory(data.inventory);
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
+            } else {
+                throw new Error(data.message || "處理失敗");
             }
+        })
+        .catch(err => {
+            statusDiv.style.color = "var(--danger)";
+            statusDiv.innerText = `❌ 操作失敗：${err.message}`;
+            // 若遇網路連線失敗，解鎖按鈕以允許重試
+            if (card) {
+                const btns = card.querySelectorAll('button');
+                btns.forEach(b => {
+                    b.disabled = false;
+                    b.style.opacity = '1';
+                    b.style.cursor = 'pointer';
+                });
+            }
+            if (btnElement) btnElement.innerText = "✅ 核准入帳";
         });
     }
 
-    function deleteForm(index) {
+    // 廢棄刪除（具備前端立即防連點機制）
+    function deleteForm(index, btnElement) {
         const item = cachedPendingForms[index];
         if (!item || !confirm(`確定要廢棄刪除 ${item.name} 的申購單嗎？`)) return;
+
+        // 🛡️ 鎖定整張卡片按鈕
+        const card = btnElement ? btnElement.closest('.pending-card') : null;
+        if (card) {
+            const btns = card.querySelectorAll('button');
+            btns.forEach(b => {
+                b.disabled = true;
+                b.style.opacity = '0.5';
+                b.style.cursor = 'not-allowed';
+            });
+        }
+        if (btnElement) btnElement.innerText = "⏳ 廢棄中...";
 
         const statusDiv = document.getElementById('status');
         statusDiv.style.color = "#64748b";
@@ -579,10 +626,24 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = "🗑️ 該筆表單已成功廢棄。";
                 
+                // 局部更新庫存與待審核清單
                 renderInventory(data.inventory);
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
             }
+        })
+        .catch(err => {
+            statusDiv.style.color = "var(--danger)";
+            statusDiv.innerText = `❌ 廢棄失敗：${err.message}`;
+            if (card) {
+                const btns = card.querySelectorAll('button');
+                btns.forEach(b => {
+                    b.disabled = false;
+                    b.style.opacity = '1';
+                    b.style.cursor = 'pointer';
+                });
+            }
+            if (btnElement) btnElement.innerText = "🗑️ 廢棄刪除";
         });
     }
 
