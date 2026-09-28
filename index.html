@@ -307,7 +307,7 @@
 
 <script>
     // ⚠️ 請保留或貼上您原有的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/library/d/1460wdnJndzKnBYoucQdwXR87mHZnJDSuYNGff_Tj3DEVgQsCSyEMQDXD/16";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzQuSNjgP8G-qbMfCBkFWC_F77iYJ99Pwghi_f-wLqXWsQY7mgvYksv-JOufQGF977P/exec";
 
     const accountStructure = {
         "期初開帳": {
@@ -483,28 +483,41 @@
         document.getElementById('totalFormAmount').innerText = total.toLocaleString();
     }
 
+    function parseAmount(val) {
+        if (val === undefined || val === null) return 0;
+        if (typeof val === 'object') return Number(val.amount) || 0;
+        return Number(val) || 0;
+    }
+
     function fetchDashboardData() {
         fetch(GAS_URL)
         .then(res => res.json())
         .then(data => {
             if (data.result === "success") {
-                document.getElementById('initialFundVal').innerText = data.initialFund.toLocaleString();
-                document.getElementById('incomeSubTotal').innerText = data.totalIncome.toLocaleString();
-                document.getElementById('expenseSubTotal').innerText = data.totalExpense.toLocaleString();
-                document.getElementById('netBalanceVal').innerText = data.netBalance.toLocaleString();
+                const initFund = parseAmount(data.initialFund);
+                const totalInc = parseAmount(data.totalIncome);
+                const totalExp = parseAmount(data.totalExpense);
+                const netBal = parseAmount(data.netBalance);
 
-                renderInventory(data.inventory);
-                renderDashList('incomeList', data.incomeTotals);
-                renderDashList('expenseList', data.expenseTotals);
+                document.getElementById('initialFundVal').innerText = initFund.toLocaleString();
+                document.getElementById('incomeSubTotal').innerText = totalInc.toLocaleString();
+                document.getElementById('expenseSubTotal').innerText = totalExp.toLocaleString();
+                document.getElementById('netBalanceVal').innerText = netBal.toLocaleString();
+
+                renderInventory(data.inventory || {});
+                renderDashList('incomeList', data.incomeTotals || {});
+                renderDashList('expenseList', data.expenseTotals || {});
                 
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
                 updatePendingBooksSummary(cachedPendingForms);
             }
+        })
+        .catch(err => {
+            console.error("載入失敗：", err);
         });
     }
 
-    // 總覽渲染：若有數量則以括號 (共 X 本) 標註
     function renderDashList(elementId, dataMap) {
         const list = document.getElementById(elementId);
         list.innerHTML = "";
@@ -519,8 +532,8 @@
             let qty = 0;
 
             if (typeof val === 'object' && val !== null) {
-                amount = val.amount || 0;
-                qty = val.qty || 0;
+                amount = Number(val.amount) || 0;
+                qty = Number(val.qty) || 0;
             } else {
                 amount = Number(val) || 0;
             }
@@ -547,7 +560,6 @@
         });
     }
 
-    // 功能一：統計目前所有尚未核准表單中的各書需求量
     function updatePendingBooksSummary(forms) {
         const box = document.getElementById('pendingBooksSummaryBox');
         const container = document.getElementById('pendingBooksTags');
@@ -564,7 +576,6 @@
         forms.forEach(form => {
             form.items.forEach(it => {
                 if (it.category === "教材收入") {
-                    // 去除身分前綴，提取純書名
                     let cleanBook = it.subItem.replace(/^(學生|社會人士)/, '');
                     bookCounts[cleanBook] = (bookCounts[cleanBook] || 0) + (it.qty || 1);
                     hasBook = true;
@@ -678,10 +689,13 @@
                     ? `✅ 成功入帳 ${item.name}！${item.email ? '已自動寄送收據信件。' : ''}`
                     : `⚠️ ${item.name} 的表單剛剛已被處理過。`;
                 
-                renderInventory(data.inventory);
+                renderInventory(data.inventory || {});
                 if (data.incomeTotals) renderDashList('incomeList', data.incomeTotals);
                 if (data.expenseTotals) renderDashList('expenseList', data.expenseTotals);
-                if (data.netBalance !== undefined) document.getElementById('netBalanceVal').innerText = data.netBalance.toLocaleString();
+                if (data.netBalance !== undefined) {
+                    const net = parseAmount(data.netBalance);
+                    document.getElementById('netBalanceVal').innerText = net.toLocaleString();
+                }
                 
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
@@ -734,7 +748,7 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = "🗑️ 該筆表單已成功廢棄。";
                 
-                renderInventory(data.inventory);
+                renderInventory(data.inventory || {});
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
                 updatePendingBooksSummary(cachedPendingForms);
