@@ -129,8 +129,19 @@
         .dash-list li {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            align-items: center;
+            padding: 7px 0;
             border-bottom: 1px dashed #f1f5f9;
+        }
+
+        .item-qty-tag {
+            font-size: 0.85em;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-weight: 600;
         }
 
         .total-summary-card {
@@ -158,6 +169,39 @@
         .inventory-item .title { font-size: 0.8em; color: #64748b; font-weight: 600; }
         .inventory-item .count { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-top: 2px; }
 
+        /* 待確認教材彙整箱 */
+        .pending-summary-box {
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+        .pending-summary-title {
+            font-weight: 700;
+            font-size: 0.95em;
+            color: #854d0e;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pending-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .pending-tag {
+            background: #ffffff;
+            border: 1px solid #fde047;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #713f12;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
         /* 待審核區塊 */
         .pending-card {
             background: #ffffff;
@@ -165,7 +209,6 @@
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 14px;
-            transition: all 0.2s ease;
         }
         .pending-header {
             display: flex;
@@ -175,8 +218,8 @@
             margin-bottom: 10px;
         }
         .action-btns { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-approve { background: var(--income-color); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; flex: 1; transition: opacity 0.2s; }
-        .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 30%; transition: opacity 0.2s; }
+        .btn-approve { background: var(--income-color); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; flex: 1; }
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 30%; }
 
         .qr-section { text-align: center; padding: 16px 0; color: #475569; }
         .qr-section img { border-radius: 8px; border: 1px solid #cbd5e1; padding: 8px; background: #fff; margin-bottom: 8px; }
@@ -209,6 +252,13 @@
 
 <div class="card">
     <h3>📋 待審核 Google 表單申購</h3>
+    
+    <!-- 待審核書本統計總覽 -->
+    <div id="pendingBooksSummaryBox" class="pending-summary-box" style="display: none;">
+        <div class="pending-summary-title">📦 待確認教材統計（問卷已填寫，尚未入帳）：</div>
+        <div class="pending-tags-container" id="pendingBooksTags"></div>
+    </div>
+
     <div id="pendingFormsContainer">
         <div style="color: #64748b;">載入待審核表單中...</div>
     </div>
@@ -257,7 +307,7 @@
 
 <script>
     // ⚠️ 請保留或貼上您原有的 Google Apps Script 部署 URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzQuSNjgP8G-qbMfCBkFWC_F77iYJ99Pwghi_f-wLqXWsQY7mgvYksv-JOufQGF977P/exec";
+    const GAS_URL = "https://script.google.com/macros/library/d/1460wdnJndzKnBYoucQdwXR87mHZnJDSuYNGff_Tj3DEVgQsCSyEMQDXD/16";
 
     const accountStructure = {
         "期初開帳": {
@@ -449,10 +499,12 @@
                 
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
+                updatePendingBooksSummary(cachedPendingForms);
             }
         });
     }
 
+    // 總覽渲染：若有數量則以括號 (共 X 本) 標註
     function renderDashList(elementId, dataMap) {
         const list = document.getElementById(elementId);
         list.innerHTML = "";
@@ -462,8 +514,24 @@
             return;
         }
         keys.forEach(k => {
+            const val = dataMap[k];
+            let amount = 0;
+            let qty = 0;
+
+            if (typeof val === 'object' && val !== null) {
+                amount = val.amount || 0;
+                qty = val.qty || 0;
+            } else {
+                amount = Number(val) || 0;
+            }
+
+            const qtyBadge = qty > 0 ? `<span class="item-qty-tag">(共 ${qty} 本)</span>` : '';
+
             const li = document.createElement('li');
-            li.innerHTML = `<span>${k}</span><span style="font-weight:700;">$${dataMap[k].toLocaleString()}</span>`;
+            li.innerHTML = `
+                <div><span>${k}</span>${qtyBadge}</div>
+                <div style="font-weight:700;">$${amount.toLocaleString()}</div>
+            `;
             list.appendChild(li);
         });
     }
@@ -477,6 +545,46 @@
             div.innerHTML = `<div class="title">${item}</div><div class="count">${invData[item]} 本/套</div>`;
             container.appendChild(div);
         });
+    }
+
+    // 功能一：統計目前所有尚未核准表單中的各書需求量
+    function updatePendingBooksSummary(forms) {
+        const box = document.getElementById('pendingBooksSummaryBox');
+        const container = document.getElementById('pendingBooksTags');
+        container.innerHTML = "";
+
+        if (!forms || forms.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        const bookCounts = {};
+        let hasBook = false;
+
+        forms.forEach(form => {
+            form.items.forEach(it => {
+                if (it.category === "教材收入") {
+                    // 去除身分前綴，提取純書名
+                    let cleanBook = it.subItem.replace(/^(學生|社會人士)/, '');
+                    bookCounts[cleanBook] = (bookCounts[cleanBook] || 0) + (it.qty || 1);
+                    hasBook = true;
+                }
+            });
+        });
+
+        if (!hasBook) {
+            box.style.display = 'none';
+            return;
+        }
+
+        Object.keys(bookCounts).forEach(bName => {
+            const tag = document.createElement('div');
+            tag.className = 'pending-tag';
+            tag.innerText = `${bName}：${bookCounts[bName]} 本`;
+            container.appendChild(tag);
+        });
+
+        box.style.display = 'block';
     }
 
     function renderPendingForms(forms) {
@@ -513,12 +621,10 @@
         });
     }
 
-    // 核准入帳（具備前端立即防連點機制）
     function approveForm(index, btnElement) {
         const item = cachedPendingForms[index];
         if (!item) return;
 
-        // 🛡️ 關鍵防呆：立刻鎖定整張卡片內的按鈕，杜絕重複點擊
         const card = btnElement ? btnElement.closest('.pending-card') : null;
         if (card) {
             const btns = card.querySelectorAll('button');
@@ -550,7 +656,6 @@
                 quantity: it.qty,
                 description: `${item.name} 表單申購`
             });
-            // ✉️ 已更新：移除「大類 - 」前綴，僅保留子項目名稱
             itemsSummaryArr.push(`• ${it.subItem}：NT$ ${it.amount}`);
         });
 
@@ -567,14 +672,20 @@
         })
         .then(res => res.json())
         .then(data => {
-            if (data.result === "success") {
-                statusDiv.style.color = "var(--income-color)";
-                statusDiv.innerText = `✅ 成功入帳 ${item.name}！${item.email ? '已自動寄送收據信件。' : ''}`;
+            if (data.result === "success" || data.result === "already_processed") {
+                statusDiv.style.color = data.result === "success" ? "var(--income-color)" : "#eab308";
+                statusDiv.innerText = data.result === "success" 
+                    ? `✅ 成功入帳 ${item.name}！${item.email ? '已自動寄送收據信件。' : ''}`
+                    : `⚠️ ${item.name} 的表單剛剛已被處理過。`;
                 
-                // 局部更新庫存與待審核清單
                 renderInventory(data.inventory);
+                if (data.incomeTotals) renderDashList('incomeList', data.incomeTotals);
+                if (data.expenseTotals) renderDashList('expenseList', data.expenseTotals);
+                if (data.netBalance !== undefined) document.getElementById('netBalanceVal').innerText = data.netBalance.toLocaleString();
+                
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
+                updatePendingBooksSummary(cachedPendingForms);
             } else {
                 throw new Error(data.message || "處理失敗");
             }
@@ -582,7 +693,6 @@
         .catch(err => {
             statusDiv.style.color = "var(--danger)";
             statusDiv.innerText = `❌ 操作失敗：${err.message}`;
-            // 若遇網路連線失敗，解鎖按鈕以允許重試
             if (card) {
                 const btns = card.querySelectorAll('button');
                 btns.forEach(b => {
@@ -595,12 +705,10 @@
         });
     }
 
-    // 廢棄刪除（具備前端立即防連點機制）
     function deleteForm(index, btnElement) {
         const item = cachedPendingForms[index];
         if (!item || !confirm(`確定要廢棄刪除 ${item.name} 的申購單嗎？`)) return;
 
-        // 🛡️ 鎖定整張卡片按鈕
         const card = btnElement ? btnElement.closest('.pending-card') : null;
         if (card) {
             const btns = card.querySelectorAll('button');
@@ -626,10 +734,10 @@
                 statusDiv.style.color = "var(--income-color)";
                 statusDiv.innerText = "🗑️ 該筆表單已成功廢棄。";
                 
-                // 局部更新庫存與待審核清單
                 renderInventory(data.inventory);
                 cachedPendingForms = data.pendingForms || [];
                 renderPendingForms(cachedPendingForms);
+                updatePendingBooksSummary(cachedPendingForms);
             }
         })
         .catch(err => {
